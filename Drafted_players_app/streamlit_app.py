@@ -499,7 +499,7 @@ with tab3:
             similarity_df = similarity_df[similarity_df['Player']
                                           != search_player]
 
-            st.markdown(f"### 🔍 Most similar players to **{search_player}**:")
+            st.markdown(f"### 🎯 Shot Diet & FG% Similarity to **{search_player}**:")
 
             # Show top 28 similar players in 4 columns (7 rows each)
             top_similar = similarity_df.head(28)
