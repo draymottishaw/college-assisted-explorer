@@ -454,12 +454,16 @@ with tab3:
 
     st.title("Player Similarity & Radar Charts")
     st.markdown(
-        "Find players with similar playing styles using statistical similarity and compare them with radar charts.")
+        "Find players with similar **shot diets** (where they get their shots) and playing styles. Similarity is based primarily on shot location frequencies, with shooting efficiency and shot creation style as secondary factors.")
 
-    # Create metrics for similarity analysis
+    # Create metrics for similarity analysis - emphasizing shot diet (frequencies)
     similarity_metrics = [
-        'Total_Rim%', 'Mid_FG%', 'Three_FG%', 'Rim_Freq', 'Mid_Freq', 'Three_Freq',
-        'Total_Assisted%', 'NonDunk_Assisted%', 'Mid_Assisted%', 'Three_Assisted%'
+        # Shot Diet (Frequencies) - Primary focus
+        'Rim_Freq', 'Mid_Freq', 'Three_Freq', 'TwoPt_Freq',
+        # Shooting Efficiency (Percentages) - Secondary
+        'Total_Rim%', 'Mid_FG%', 'Three_FG%',
+        # Shot Creation Style (Assisted %) - Tertiary
+        'Total_Assisted%', 'Mid_Assisted%', 'Three_Assisted%'
     ]
 
     # Filter players with complete data for similarity analysis
@@ -499,7 +503,8 @@ with tab3:
             similarity_df = similarity_df[similarity_df['Player']
                                           != search_player]
 
-            st.markdown(f"### 🎯 Shot Diet & FG% Similarity to **{search_player}**:")
+            st.markdown(
+                f"### 🎯 Shot Diet & FG% Similarity to **{search_player}**:")
 
             # Show top 28 similar players in 4 columns (7 rows each)
             top_similar = similarity_df.head(28)
