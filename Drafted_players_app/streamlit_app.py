@@ -584,9 +584,8 @@ with tab3:
             player2_data = df_similarity[df_similarity['Player']
                                          == player2].iloc[0]
 
-            # Create radar chart for both players
-            metrics = ['Total_Rim%', 'Mid_FG%', 'Three_FG%', 'Rim_Freq', 'Mid_Freq', 'Three_Freq',
-                       'Total_Assisted%', 'NonDunk_Assisted%', 'Mid_Assisted%', 'Three_Assisted%']
+            # Create radar chart for both players using same metrics as similarity
+            metrics = similarity_metrics
 
             values1 = [player1_data[metric] for metric in metrics]
             values2 = [player2_data[metric] for metric in metrics]
@@ -610,8 +609,9 @@ with tab3:
             ax.fill(angles, values2, alpha=0.25, color='#4ECDC4')
 
             # Customize chart with transparent background and white text/lines
-            metrics_labels = ['Rim FG%', 'Mid FG%', '3PT FG%', 'Rim Freq', 'Mid Freq', '3PT Freq',
-                              'Overall Assist%', 'Rim Assist%', 'Mid Assist%', '3PT Assist%']
+            metrics_labels = ['Rim Freq', 'Mid Freq', '3PT Freq', '2PT Freq',
+                              'Rim FG%', 'Mid FG%', '3PT FG%',
+                              'Overall Assist%', 'Mid Assist%', '3PT Assist%']
 
             ax.set_xticks(angles[:-1])
             ax.set_xticklabels(metrics_labels, size=9,
