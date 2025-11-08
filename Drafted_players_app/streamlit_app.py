@@ -580,8 +580,8 @@ with tab3:
                                          == player2].iloc[0]
 
             # Create radar chart for both players
-            metrics = ['At Rim %', 'Short Mid %', 'Long Mid %', 'Corner 3 %', 'Above Break 3 %',
-                       'At Rim Freq', 'Short Mid Freq', 'Long Mid Freq', 'Corner 3 Freq', 'Above Break 3 Freq']
+            metrics = ['Total_Rim%', 'Mid_FG%', 'Three_FG%', 'Rim_Freq', 'Mid_Freq', 'Three_Freq',
+                       'Total_Assisted%', 'NonDunk_Assisted%', 'Mid_Assisted%', 'Three_Assisted%']
 
             values1 = [player1_data[metric] for metric in metrics]
             values2 = [player2_data[metric] for metric in metrics]
@@ -605,8 +605,8 @@ with tab3:
             ax.fill(angles, values2, alpha=0.25, color='#4ECDC4')
 
             # Customize chart with transparent background and white text/lines
-            metrics_labels = ['At Rim %', 'Short Mid %', 'Long Mid %', 'Corner 3 %', 'Above Break 3 %',
-                              'At Rim Freq', 'Short Mid Freq', 'Long Mid Freq', 'Corner 3 Freq', 'Above Break 3 Freq']
+            metrics_labels = ['Rim FG%', 'Mid FG%', '3PT FG%', 'Rim Freq', 'Mid Freq', '3PT Freq',
+                              'Overall Assist%', 'Rim Assist%', 'Mid Assist%', '3PT Assist%']
 
             ax.set_xticks(angles[:-1])
             ax.set_xticklabels(metrics_labels, size=9,
