@@ -85,6 +85,7 @@ section[data-testid="stSidebar"] small {
 # ============================================================
 ROOT = Path(__file__).parent
 PATH_ASSISTED = ROOT / "temp_data" / "nba_complete_assisted.csv"
+PATH_NBA_PLAYERS = ROOT / "temp_data" / "nba_players.csv"
 PATH_CAREER = ROOT / "temp_data" / "career_drafted.csv"
 PATH_BART = ROOT / "temp_data" / "Bart_Core_Positions.csv"
 
@@ -102,6 +103,7 @@ def load_data():
     # Load the complete dataset that already has all metrics calculated
     with st.spinner("Loading comprehensive NBA player dataset (1,235 players)..."):
         df_complete = pd.read_csv(PATH_ASSISTED, low_memory=False)
+        df_nba_players = pd.read_csv(PATH_NBA_PLAYERS, low_memory=False)
         df_career = pd.read_csv(PATH_CAREER, low_memory=False)
         df_bart = pd.read_csv(PATH_BART, low_memory=False)
 
@@ -110,32 +112,40 @@ def load_data():
         df_complete["player_lower"] = df_complete["Player"].astype(
             str).str.lower().str.strip()
 
-    for df in (df_career, df_bart):
-        if "Player_lower" in df.columns:
-            df["player_lower"] = df["Player_lower"].astype(
+    for df_temp in (df_nba_players, df_career, df_bart):
+        if "Player_lower" in df_temp.columns:
+            df_temp["player_lower"] = df_temp["Player_lower"].astype(
                 str).str.lower().str.strip()
         else:
-            df["player_lower"] = df["Player"].astype(
+            df_temp["player_lower"] = df_temp["Player"].astype(
                 str).str.lower().str.strip()
 
-    # Merge role and year information
+    # Use complete NBA players data first (includes undrafted), then fallback to drafted-only data
+    df_nba_slim = df_nba_players[["player_lower",
+                                  "Role", "YR"]].drop_duplicates("player_lower")
     df_career_slim = df_career[["player_lower",
                                 "Role", "YR"]].drop_duplicates("player_lower")
     df_bart_slim = df_bart[["player_lower", "Role",
                             "YYR"]].drop_duplicates("player_lower")
 
-    df = df_complete.merge(df_career_slim, on="player_lower", how="left")
+    # Merge with priority: nba_players (all) > career_drafted > bart
+    df = df_complete.merge(df_nba_slim, on="player_lower", how="left")
+    df = df.merge(df_career_slim, on="player_lower",
+                  how="left", suffixes=("", "_career"))
     df = df.merge(df_bart_slim, on="player_lower",
                   how="left", suffixes=("", "_bart"))
-    df["Role_final"] = df["Role"].fillna(df["Role_bart"])
+
+    # Create final role and year with priority order
+    df["Role_final"] = df["Role"].fillna(
+        df["Role_career"]).fillna(df["Role_bart"])
     df["Year_final"] = df["YR"].fillna(df["YYR"])
 
-    return df, df_complete, df_career, df_bart
+    return df, df_complete, df_nba_players, df_career, df_bart
 
 
 # Load data with progress indicator
 with st.spinner("Initializing NCAA-NBA Player Explorer..."):
-    df, df_complete, df_career, df_bart = load_data()
+    df, df_complete, df_nba_players, df_career, df_bart = load_data()
 
 
 # ============================================================
