@@ -456,14 +456,14 @@ with tab3:
     st.markdown(
         "Find players with similar **shot diets** (where they get their shots) and playing styles. Similarity is based primarily on shot location frequencies, with shooting efficiency and shot creation style as secondary factors.")
 
-    # Create metrics for similarity analysis - emphasizing shot diet (frequencies)
+    # Create metrics for similarity analysis - emphasizing shot diet & shot creation
     similarity_metrics = [
-        # Shot Diet (Frequencies) - Primary focus
+        # Shot Diet (Frequencies) - 36% weight (4/11)
         'Rim_Freq', 'Mid_Freq', 'Three_Freq', 'TwoPt_Freq',
-        # Shooting Efficiency (Percentages) - Secondary
-        'Total_Rim%', 'Mid_FG%', 'Three_FG%',
-        # Shot Creation Style (Assisted %) - Tertiary
-        'Total_Assisted%', 'Mid_Assisted%', 'Three_Assisted%'
+        # Shot Creation (Assisted %) - 45% weight (5/11)
+        'Total_Assisted%', 'Mid_Assisted%', 'Three_Assisted%', 'TwoPt_Assisted%', 'NonDunk_Assisted%',
+        # Shooting Efficiency (minimal) - 18% weight (2/11)
+        'Three_FG%', 'Total_Rim%'
     ]
 
     # Filter players with complete data for similarity analysis
@@ -610,8 +610,8 @@ with tab3:
 
             # Customize chart with transparent background and white text/lines
             metrics_labels = ['Rim Freq', 'Mid Freq', '3PT Freq', '2PT Freq',
-                              'Rim FG%', 'Mid FG%', '3PT FG%',
-                              'Overall Assist%', 'Mid Assist%', '3PT Assist%']
+                              'Overall Assist%', 'Mid Assist%', '3PT Assist%', '2PT Assist%', 'NonDunk Assist%',
+                              '3PT FG%', 'Rim FG%']
 
             ax.set_xticks(angles[:-1])
             ax.set_xticklabels(metrics_labels, size=9,
