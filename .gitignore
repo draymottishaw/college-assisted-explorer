@@ -1,0 +1,28 @@
+# Virtual environments
+.venv/
+.venv311/
+__pycache__/
+.streamlit/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+*.log
+
+# Data files (if large)
+*.csv
+*.json
+*.xlsx
+*.pkl
+
+# Python cache
+*.pyc
+*.pyo
+*.pyd
