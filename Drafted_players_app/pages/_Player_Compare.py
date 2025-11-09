@@ -60,12 +60,22 @@ def player_compare_app(df_merged: pd.DataFrame,
         st.table(dfm)
 
     with c2:
+        # Calculate averages from the current dataset
+        player_role = prow.get("Role_final")
+        player_year = prow.get("Year_final")
+
+        role_avg = df[df["Role_final"] == player_role]["Total_Assisted%"].mean(
+        ) if pd.notna(player_role) else None
+        year_avg = df[df["Year_final"] == player_year]["Total_Assisted%"].mean(
+        ) if pd.notna(player_year) else None
+        overall_avg = df["Total_Assisted%"].mean()
+
         fig_total = grouped_player_role_year_overall_chart(
             "Total Assisted% — Player vs Role/Year/Overall",
             prow.get("Total_Assisted%"),
-            prow.get("Role_Avg"),
-            prow.get("Year_Avg"),
-            prow.get("Overall_Avg"),
+            role_avg,
+            year_avg,
+            overall_avg,
         )
         st.pyplot(fig_total)
 
