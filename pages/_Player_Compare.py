@@ -70,6 +70,9 @@ def player_compare_app(df_merged: pd.DataFrame,
         ) if pd.notna(player_year) else None
         overall_avg = df["Total_Assisted%"].mean()
 
+        # Debug info
+        st.write(f"🔍 Debug: Player={prow.get('Total_Assisted%'):.1%}, Role({player_role})={role_avg:.1%}, Year({player_year})={year_avg:.1%}, Overall={overall_avg:.1%}")
+
         fig_total = grouped_player_role_year_overall_chart(
             "Total Assisted% — Player vs Role/Year/Overall",
             prow.get("Total_Assisted%"),
