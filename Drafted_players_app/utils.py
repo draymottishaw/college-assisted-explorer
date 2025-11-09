@@ -108,7 +108,7 @@ def compute_metrics(df_assisted, df_career, df_bart):
 
 
 def grouped_player_role_year_overall_chart(title: str, player_val, role_val, year_val, overall_val):
-    """Render mini comparison bar chart with consistent dark styling."""
+    """Render mini comparison bar chart with consistent dark styling. Fixed v2."""
     # Better None/NaN handling - convert None to NaN for consistent pd.notna() behavior
     def safe_convert(val):
         if val is None:
