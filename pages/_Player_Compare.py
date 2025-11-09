@@ -64,14 +64,26 @@ def player_compare_app(df_merged: pd.DataFrame,
         player_role = prow.get("Role_final")
         player_year = prow.get("Year_final")
 
-        role_avg = df[df["Role_final"] == player_role]["Total_Assisted%"].mean(
-        ) if pd.notna(player_role) else None
-        year_avg = df[df["Year_final"] == player_year]["Total_Assisted%"].mean(
-        ) if pd.notna(player_year) else None
-        overall_avg = df["Total_Assisted%"].mean()
+        role_df = df[df["Role_final"] == player_role] if pd.notna(
+            player_role) else pd.DataFrame()
+        year_df = df[df["Year_final"] == player_year] if pd.notna(
+            player_year) else pd.DataFrame()
+
+        role_avg = role_df["Total_Assisted%"].mean(
+        ) if not role_df.empty else None
+        year_avg = year_df["Total_Assisted%"].mean(
+        ) if not year_df.empty else None
+        overall_avg = df["Total_Assisted%"].mean(
+        ) if "Total_Assisted%" in df.columns else None
 
         # Debug info
-        st.write(f"🔍 Debug: Player={prow.get('Total_Assisted%'):.1%}, Role({player_role})={role_avg:.1%}, Year({player_year})={year_avg:.1%}, Overall={overall_avg:.1%}")
+        player_pct = f"{prow.get('Total_Assisted%'):.1%}" if pd.notna(
+            prow.get('Total_Assisted%')) else "N/A"
+        role_pct = f"{role_avg:.1%}" if pd.notna(role_avg) else "N/A"
+        year_pct = f"{year_avg:.1%}" if pd.notna(year_avg) else "N/A"
+        overall_pct = f"{overall_avg:.1%}" if pd.notna(overall_avg) else "N/A"
+        st.write(
+            f"🔍 Debug: Player={player_pct}, Role({player_role})={role_pct}, Year({player_year})={year_pct}, Overall={overall_pct}")
 
         fig_total = grouped_player_role_year_overall_chart(
             "Total Assisted% — Player vs Role/Year/Overall",
