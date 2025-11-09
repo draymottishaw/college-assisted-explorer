@@ -450,6 +450,19 @@ with tab1:
 # ============================================================
 with tab2:
     from pages._Player_Compare import player_compare_app
+
+    # Debug: Check dataset before passing to player_compare_app
+    st.write("DEBUG: Main app dataset info before player_compare_app:")
+    st.write(f"Dataset shape: {df.shape}")
+    st.write(
+        f"Columns with 'Role' or 'Year': {[col for col in df.columns if 'role' in col.lower() or 'year' in col.lower()]}")
+    st.write(f"Role_final column exists: {'Role_final' in df.columns}")
+    st.write(f"Year_final column exists: {'Year_final' in df.columns}")
+    if 'Role_final' in df.columns:
+        st.write(f"Role_final unique values: {df['Role_final'].unique()[:10]}")
+    if 'Year_final' in df.columns:
+        st.write(f"Year_final unique values: {df['Year_final'].unique()[:10]}")
+
     # Pass the merged df instead of df_complete
     player_compare_app(df, df_career, df_bart)
 
