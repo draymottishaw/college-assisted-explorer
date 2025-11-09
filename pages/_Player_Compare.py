@@ -21,6 +21,25 @@ def player_compare_app(df_merged: pd.DataFrame,
     # Use the pre-computed and merged dataset directly since it already has all metrics and role/year data
     df = df_merged.copy()
 
+    # DEBUG: Check the dataset we received
+    st.write("=== DATASET DEBUG INFO ===")
+    st.write(f"Dataset shape: {df.shape}")
+    st.write(
+        f"Columns with 'Role': {[col for col in df.columns if 'role' in col.lower()]}")
+    st.write(
+        f"Columns with 'Year': {[col for col in df.columns if 'year' in col.lower() or 'yr' in col.lower()]}")
+    st.write(
+        f"Columns with 'Assisted': {[col for col in df.columns if 'assisted' in col.lower()]}")
+    st.write(f"Sample player data:")
+    if len(df) > 0:
+        sample = df.iloc[0]
+        st.write(f"  Player: {sample.get('Player')}")
+        st.write(f"  Role_final: {sample.get('Role_final')}")
+        st.write(f"  Year_final: {sample.get('Year_final')}")
+        st.write(f"  Total_Assisted%: {sample.get('Total_Assisted%')}")
+    st.write("=== END DEBUG ===")
+    st.write("")
+
     # ========================================================
     # SINGLE PLAYER SECTION
     # ========================================================
