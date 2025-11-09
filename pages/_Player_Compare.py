@@ -83,7 +83,7 @@ def player_compare_app(df_merged: pd.DataFrame,
         year_pct = f"{year_avg:.1%}" if pd.notna(year_avg) else "N/A"
         overall_pct = f"{overall_avg:.1%}" if pd.notna(overall_avg) else "N/A"
         st.write(
-            f"🔍 Debug: Player={player_pct}, Role({player_role})={role_pct}, Year({player_year})={year_pct}, Overall={overall_pct}")
+            f"DEBUG: Player={player_pct}, Role({player_role})={role_pct}, Year({player_year})={year_pct}, Overall={overall_pct}")
 
         fig_total = grouped_player_role_year_overall_chart(
             "Total Assisted% — Player vs Role/Year/Overall",
