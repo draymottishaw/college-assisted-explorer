@@ -1,6 +1,7 @@
 # ============================================================
 # streamlit_app.py — College Basketball Assisted Explorer
 # Clean, tab-based layout (no sidebar navigation header)
+# Force redeploy v2.1 - Fixed chart rendering
 # ============================================================
 
 import pandas as pd
