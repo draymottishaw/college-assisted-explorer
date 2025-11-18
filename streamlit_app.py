@@ -59,6 +59,43 @@ st.markdown(
     }
     [data-testid="stSidebarNav"] { display: none; }
     [data-testid="stSidebarNav"] + div { padding-top: 0 !important; }
+    
+    /* Compact sidebar spacing */
+    section[data-testid="stSidebar"] .stRadio {
+        margin-top: -0.5rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+    section[data-testid="stSidebar"] .stCheckbox {
+        margin-top: -0.5rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+    section[data-testid="stSidebar"] .stSelectbox {
+        margin-top: -0.5rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+    section[data-testid="stSidebar"] h3 {
+        margin-top: 0.5rem !important;
+        margin-bottom: 0.3rem !important;
+        font-size: 1rem !important;
+    }
+    
+    /* Compact main content */
+    .main .block-container {
+        padding-top: 2rem !important;
+        padding-bottom: 1rem !important;
+    }
+    h1 {
+        margin-bottom: 0.5rem !important;
+        padding-bottom: 0 !important;
+    }
+    h2 {
+        margin-top: 1rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 0.5rem !important;
+    }
+    
     /* --- tighten and center min/max inputs --- */
 section[data-testid="stSidebar"] div[data-testid="stNumberInput"] {
     display: flex !important;
@@ -89,6 +126,7 @@ PATH_ASSISTED = ROOT / "temp_data" / "nba_complete_assisted.csv"
 PATH_NBA_PLAYERS = ROOT / "temp_data" / "nba_players.csv"
 PATH_CAREER = ROOT / "temp_data" / "career_drafted.csv"
 PATH_BART = ROOT / "temp_data" / "Bart_Core_Positions.csv"
+PATH_ALL_ASSISTED = ROOT / "temp_data" / "all_assisted.csv"
 
 
 @st.cache_data
@@ -102,11 +140,12 @@ def load_data():
         st.stop()
 
     # Load the complete dataset that already has all metrics calculated
-    with st.spinner("Loading comprehensive NBA player dataset (1,235 players)..."):
+    with st.spinner("Loading comprehensive player dataset..."):
         df_complete = pd.read_csv(PATH_ASSISTED, low_memory=False)
         df_nba_players = pd.read_csv(PATH_NBA_PLAYERS, low_memory=False)
         df_career = pd.read_csv(PATH_CAREER, low_memory=False)
         df_bart = pd.read_csv(PATH_BART, low_memory=False)
+        df_all_assisted = pd.read_csv(PATH_ALL_ASSISTED, low_memory=False)
 
     # Ensure player_lower column exists
     if "player_lower" not in df_complete.columns:
@@ -141,12 +180,33 @@ def load_data():
         df["Role_career"]).fillna(df["Role_bart"])
     df["Year_final"] = df["YR"].fillna(df["YYR"])
 
-    return df, df_complete, df_nba_players, df_career, df_bart
+    # Process all_assisted data (non-NBA players)
+    if "Player_lower" in df_all_assisted.columns:
+        df_all_assisted["player_lower"] = df_all_assisted["Player_lower"].astype(
+            str).str.lower().str.strip()
+    elif "player_lower" not in df_all_assisted.columns:
+        df_all_assisted["player_lower"] = df_all_assisted["Player"].astype(
+            str).str.lower().str.strip()
+
+    # Compute metrics for all_assisted data
+    from utils import compute_metrics
+    df_all_computed = compute_metrics(df_all_assisted, df_career, df_bart)
+
+    # Add dunk metrics to NBA dataset (df) as well
+    if "DunkMade" in df.columns and "DunkMiss" in df.columns:
+        df["DunkAtt"] = df["DunkMade"] + df["DunkMiss"]
+        df["Total_Att"] = df.get("RimAtt", 0) + \
+            df.get("Mid_Att", 0) + df.get("Three_Att", 0)
+        df["Dunk_Freq"] = df["DunkAtt"].div(
+            df["Total_Att"].replace({0: pd.NA}))
+        df["Dunk_FG%"] = df["DunkMade"].div(df["DunkAtt"].replace({0: pd.NA}))
+
+    return df, df_complete, df_nba_players, df_career, df_bart, df_all_computed
 
 
 # Load data with progress indicator
 with st.spinner("Initializing NCAA-NBA Player Explorer..."):
-    df, df_complete, df_nba_players, df_career, df_bart = load_data()
+    df, df_complete, df_nba_players, df_career, df_bart, df_all_computed = load_data()
 
 
 # ============================================================
@@ -162,9 +222,9 @@ tab1, tab2, tab3 = st.tabs([
 # TAB 1 — ASSISTED & RIM EXPLORER
 # ============================================================
 with tab1:
-    st.title("Assisted Percentage Explorer")
+    st.markdown("### Assisted Percentage Explorer")
 
-    st.markdown("#### Column Descriptions")
+    st.markdown("**Column Descriptions**")
 
     # Three-column layout for better organization
     col1, col2, col3 = st.columns(3)
@@ -201,36 +261,72 @@ with tab1:
             **Mid_Assisted%** — Midrange assists  
             **TwoPt_Assisted%** — 2P assists  
             **Three_Assisted%** — 3P assists  
-            **Total_Assisted%** — Overall assists
+            **Total_Assisted%** — Overall assists  
+            
+            **🏀 Dunk Metrics**  
+            **Dunk_Freq** — % of shots that are dunks  
+            **Dunk_FG%** — Dunk field goal %
             """
         )
 
-    # Footer info
+    # Sidebar filters
+        # === SIDEBAR FILTERS ===
+    st.sidebar.markdown("**Filters**")
+
+    # Player type filter
+    player_type = st.sidebar.radio(
+        "Player Dataset",
+        ["NBA Players Only", "Non-NBA Players Only", "All College Players"],
+        index=0,
+        help="Filter by players who made it to the NBA, didn't make it to NBA, or show everyone"
+    )
+    show_all_players = (player_type == "All College Players")
+    show_non_nba_only = (player_type == "Non-NBA Players Only")
+
+    # Footer info (after player type is defined)
+    if show_non_nba_only:
+        player_count_text = "28,290 NCAA players who did NOT make it to the NBA"
+    elif show_all_players:
+        player_count_text = "all 29,525 NCAA Division I players (2010-2025)"
+    else:
+        player_count_text = "1,235 NCAA players who made it to the NBA"
+
     st.markdown(
-        """
+        f"""
         ---
         *Data source: BartTorvik.com* | *Page by Dray Mottishaw (@draymottishaw on Twitter/X)*  
-        📊 **Dataset**: Complete career totals for 1,235 NCAA players who made it to the NBA
+        📊 **Dataset**: Complete career totals for {player_count_text}
         """)
 
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    # Sidebar filters
-    st.sidebar.header("Filters")
-
     # Add performance controls
-    st.sidebar.markdown("### 📊 Display Options")
-    max_players = st.sidebar.selectbox(
-        "Max Players to Display",
-        [100, 250, 500, 1000, 1235],
-        index=1,  # Default to 250
-        help="Limit results for better performance"
+    st.sidebar.markdown("---")
+    st.sidebar.markdown("**📊 Display Options**")
+
+    use_pagination = st.sidebar.checkbox(
+        "Use Pagination",
+        value=True,
+        help="Break results into pages for better performance with large datasets"
     )
+
+    if use_pagination:
+        page_size = st.sidebar.selectbox(
+            "Players Per Page",
+            [100, 250, 500, 1000],
+            index=1,  # Default to 250
+            help="Number of players to show per page"
+        )
+    else:
+        max_players = st.sidebar.selectbox(
+            "Max Players to Display",
+            [100, 250, 500, 1000, 2500, 5000, 10000],
+            index=2,  # Default to 500
+            help="Limit results (no pagination - may be slow for large datasets)"
+        )
 
     # Create sort options from all available stat columns
     stat_cols = [
         "NonDunk_Rim%", "Total_Rim%", "Mid_FG%", "Three_FG%", "TwoPt_FG%",
-        "Rim_Freq", "Mid_Freq", "Three_Freq", "TwoPt_Freq",
+        "Rim_Freq", "Mid_Freq", "Three_Freq", "TwoPt_Freq", "Dunk_Freq", "Dunk_FG%",
         "NonDunk_Assisted%", "Total_Assisted_Rim%", "Mid_Assisted%",
         "Three_Assisted%", "TwoPt_Assisted%", "Total_Assisted%"
     ]
@@ -245,6 +341,8 @@ with tab1:
         "Mid_Freq": "Midrange Shot Freq%",
         "Three_Freq": "3PT Shot Freq%",
         "TwoPt_Freq": "2PT Shot Freq%",
+        "Dunk_Freq": "Dunk Shot Freq%",
+        "Dunk_FG%": "Dunk FG%",
         "NonDunk_Assisted%": "Non-Dunk Rim Assisted%",
         "Total_Assisted_Rim%": "Total Rim Assisted%",
         "Mid_Assisted%": "Midrange Assisted%",
@@ -266,13 +364,31 @@ with tab1:
     )
     sort_by = sort_mapping[sort_display_selected]
 
-    roles = sorted(df["Role_final"].dropna().unique())
-    years = sorted(df["Year_final"].dropna().unique(), key=lambda x: {
-                   "Fr": 1, "So": 2, "Jr": 3, "Sr": 4}.get(x, 99))
+    # Get roles and years from the appropriate dataset
+    if show_non_nba_only:
+        # Filter to only non-NBA players (players in all_assisted but not in nba_complete)
+        nba_players_lower = set(df["player_lower"].str.lower().str.strip())
+        base_df = df_all_computed[~df_all_computed["player_lower"].str.lower(
+        ).str.strip().isin(nba_players_lower)].copy()
+    elif show_all_players:
+        base_df = df_all_computed
+    else:
+        base_df = df
 
-    # Add "Unknown" option for players without role/year data
-    roles_with_unknown = roles + ["Unknown (500 players)"]
-    years_with_unknown = years + ["Unknown"]
+    # Get unique roles and years from selected dataset
+    roles = sorted(base_df["Role_final"].dropna().unique()
+                   ) if "Role_final" in base_df.columns else []
+    years = sorted(base_df["Year_final"].dropna().unique(), key=lambda x: {
+                   "Fr": 1, "So": 2, "Jr": 3, "Sr": 4}.get(x, 99)) if "Year_final" in base_df.columns else []
+
+    # Only add "Unknown" option if there are actually unknown values
+    has_unknown_roles = base_df["Role_final"].isna(
+    ).any() if "Role_final" in base_df.columns else False
+    has_unknown_years = base_df["Year_final"].isna(
+    ).any() if "Year_final" in base_df.columns else False
+
+    roles_with_unknown = roles + ["Unknown"] if has_unknown_roles else roles
+    years_with_unknown = years + ["Unknown"] if has_unknown_years else years
 
     selected_roles = st.sidebar.multiselect(
         "Role", roles_with_unknown, default=roles)
@@ -281,7 +397,8 @@ with tab1:
     search_txt = st.sidebar.text_input(
         "Search Player", placeholder="Type player name...")
 
-    st.sidebar.markdown("### QUERY")
+    st.sidebar.markdown("---")
+    st.sidebar.markdown("**QUERY**")
 
     range_filters = {}
 
@@ -307,22 +424,22 @@ with tab1:
         st.sidebar.markdown(
             "<hr style='border:0.5px solid #333;'>", unsafe_allow_html=True)
 
-    # Apply filters
-    filt = df.copy()
+    # Apply filters - use the appropriate dataset based on toggle
+    base_df = df_all_computed if show_all_players else df
+    filt = base_df.copy()
 
     # Role filtering - handle "Unknown" option
     if selected_roles:
-        if "Unknown (500 players)" in selected_roles:
+        if "Unknown" in selected_roles:
             # Include players with no role data
-            known_roles = [r for r in selected_roles if r !=
-                           "Unknown (500 players)"]
+            known_roles = [r for r in selected_roles if r != "Unknown"]
             if known_roles:
-                role_mask = df["Role_final"].isin(
-                    known_roles) | df["Role_final"].isna()
+                role_mask = base_df["Role_final"].isin(
+                    known_roles) | base_df["Role_final"].isna()
             else:
-                role_mask = df["Role_final"].isna()
+                role_mask = base_df["Role_final"].isna()
         else:
-            role_mask = df["Role_final"].isin(selected_roles)
+            role_mask = base_df["Role_final"].isin(selected_roles)
         filt = filt[role_mask]
 
     # Year filtering - handle "Unknown" option
@@ -330,12 +447,12 @@ with tab1:
         if "Unknown" in selected_years:
             known_years = [y for y in selected_years if y != "Unknown"]
             if known_years:
-                year_mask = df["Year_final"].isin(
-                    known_years) | df["Year_final"].isna()
+                year_mask = base_df["Year_final"].isin(
+                    known_years) | base_df["Year_final"].isna()
             else:
-                year_mask = df["Year_final"].isna()
+                year_mask = base_df["Year_final"].isna()
         else:
-            year_mask = df["Year_final"].isin(selected_years)
+            year_mask = base_df["Year_final"].isin(selected_years)
         filt = filt[year_mask]
 
     if search_txt:
@@ -349,7 +466,7 @@ with tab1:
             low, high, inclusive="both") | filt[col].isna()
         filt = filt[mask]
 
-    # Sort and limit results for performance
+    # Sort results
     if len(filt) > 0:
         if sort_by in filt.columns:
             filt = filt.sort_values(
@@ -357,11 +474,36 @@ with tab1:
         else:
             filt = filt.sort_values("Player")
 
-        # Limit results for performance
-        if len(filt) > max_players:
-            filt = filt.head(max_players)
-            st.sidebar.warning(
-                f"⚠️ Showing top {max_players} results. Use filters to narrow down.")
+        # Apply pagination or limit
+        if use_pagination:
+            total_results = len(filt)
+            total_pages = (total_results + page_size -
+                           1) // page_size  # Ceiling division
+
+            if total_pages > 1:
+                page_num = st.number_input(
+                    f"Page (1-{total_pages})",
+                    min_value=1,
+                    max_value=total_pages,
+                    value=1,
+                    step=1,
+                    help=f"Showing {page_size} players per page out of {total_results:,} total results"
+                )
+                start_idx = (page_num - 1) * page_size
+                end_idx = start_idx + page_size
+                filt = filt.iloc[start_idx:end_idx]
+
+                st.info(
+                    f"📄 Page {page_num} of {total_pages} | Showing results {start_idx + 1:,}-{min(end_idx, total_results):,} of {total_results:,} total")
+            else:
+                st.info(
+                    f"📄 Showing all {total_results:,} results (single page)")
+        else:
+            # Non-pagination mode - just limit
+            if len(filt) > max_players:
+                filt = filt.head(max_players)
+                st.sidebar.warning(
+                    f"⚠️ Showing top {max_players} results. Use filters to narrow down or enable pagination.")
 
     # Role averages - use the same stat_cols as the filters for consistency
     # Safe role average calculation with error handling
@@ -404,29 +546,30 @@ with tab1:
                 styles.append("")
         return styles
 
-    st.subheader("NCAA Players Who Played in NBA (2010–2025)")
+    # Set title based on selected dataset
+    if show_non_nba_only:
+        dataset_title = "Non-NBA Players (2010–2025)"
+    elif show_all_players:
+        dataset_title = "All NCAA D-I Players (2010–2025)"
+    else:
+        dataset_title = "NCAA Players → NBA (2010–2025)"
+    st.markdown(f"**{dataset_title}**")
 
-    # Performance info
-    total_after_filters = len(filt) if max_players >= len(filt) else "1000+"
-    c1, c2 = st.columns([0.4, 0.6])
-    c1.markdown(f"**Showing:** {len(filt):,} players")
-    c1.markdown(f"**Total in DB:** {len(df):,}")
-
-    if len(filt) >= max_players:
-        c1.markdown(f"**⚡ Limited to:** {max_players:,} for performance")
-
-    c2.markdown(
-        """
-        <div style="margin-top:12px;text-align:right;color:#aaa;font-size:13px;margin-bottom:4px;">
-            Ratings are based on positional averages
-        </div>
-        <div style="display:flex;gap:8px;justify-content:flex-end;margin-bottom:8px;">
-            <span>Legend:</span>
-            <span style="background:rgba(255, 71, 71,0.15);padding:4px 10px;border-radius:4px;">Bad</span>
-            <span style="background:rgba(255, 110, 110,0.25);padding:4px 10px;border-radius:4px;">Below</span>
-            <span style="background:rgba(211, 219, 160,0.250);padding:4px 10px;border-radius:4px;">Avg</span>
-            <span style="background:rgba(153,245,144,0.35);padding:4px 10px;border-radius:4px;">Above</span>
-            <span style="background:rgba(47,194,69,0.35);padding:4px 10px;border-radius:4px;">Excellent</span>
+    # Performance info with legend on same line
+    st.markdown(
+        f"""
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <div style="font-size:14px;">
+                <strong>Page:</strong> {len(filt):,} players | <strong>Total:</strong> {len(base_df):,}
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;font-size:12px;">
+                <span style="font-weight:500;color:#aaa;">Legend:</span>
+                <span style="background:rgba(255, 71, 71,0.15);padding:3px 10px;border-radius:4px;">Bad</span>
+                <span style="background:rgba(255, 110, 110,0.25);padding:3px 10px;border-radius:4px;">Below</span>
+                <span style="background:rgba(211, 219, 160,0.250);padding:3px 10px;border-radius:4px;">Avg</span>
+                <span style="background:rgba(153,245,144,0.35);padding:3px 10px;border-radius:4px;">Above</span>
+                <span style="background:rgba(47,194,69,0.35);padding:3px 10px;border-radius:4px;">Excellent</span>
+            </div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -463,7 +606,7 @@ with tab3:
     from sklearn.preprocessing import StandardScaler
     from sklearn.metrics.pairwise import cosine_similarity
 
-    st.title("Player Similarity & Radar Charts")
+    st.markdown("### Player Similarity & Radar Charts")
     st.markdown(
         "Find players with similar **shot diets** (where they get their shots) and playing styles. Similarity is based primarily on shot location frequencies, with shooting efficiency and shot creation style as secondary factors.")
 

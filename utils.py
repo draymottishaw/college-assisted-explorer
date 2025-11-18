@@ -80,6 +80,11 @@ def compute_metrics(df_assisted, df_career, df_bart):
     df["Three_Freq"] = df["Three_Att"].div(df["Total_Att"].replace({0: pd.NA}))
     df["TwoPt_Freq"] = df["TwoPt_Att"].div(df["Total_Att"].replace({0: pd.NA}))
 
+    # Dunk frequency
+    df["DunkAtt"] = df["DunkMade"] + df["DunkMiss"]
+    df["Dunk_Freq"] = df["DunkAtt"].div(df["Total_Att"].replace({0: pd.NA}))
+    df["Dunk_FG%"] = df["DunkMade"].div(df["DunkAtt"].replace({0: pd.NA}))
+
     # ============================================================
     # MERGE ROLE / YEAR CONTEXT
     # ============================================================
