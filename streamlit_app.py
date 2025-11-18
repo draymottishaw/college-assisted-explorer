@@ -145,7 +145,12 @@ def load_data():
         df_nba_players = pd.read_csv(PATH_NBA_PLAYERS, low_memory=False)
         df_career = pd.read_csv(PATH_CAREER, low_memory=False)
         df_bart = pd.read_csv(PATH_BART, low_memory=False)
-        df_all_assisted = pd.read_csv(PATH_ALL_ASSISTED, low_memory=False)
+
+        # Load all_assisted if available (optional for cloud deployment)
+        if PATH_ALL_ASSISTED.exists():
+            df_all_assisted = pd.read_csv(PATH_ALL_ASSISTED, low_memory=False)
+        else:
+            df_all_assisted = None
 
     # Ensure player_lower column exists
     if "player_lower" not in df_complete.columns:
@@ -180,17 +185,19 @@ def load_data():
         df["Role_career"]).fillna(df["Role_bart"])
     df["Year_final"] = df["YR"].fillna(df["YYR"])
 
-    # Process all_assisted data (non-NBA players)
-    if "Player_lower" in df_all_assisted.columns:
-        df_all_assisted["player_lower"] = df_all_assisted["Player_lower"].astype(
-            str).str.lower().str.strip()
-    elif "player_lower" not in df_all_assisted.columns:
-        df_all_assisted["player_lower"] = df_all_assisted["Player"].astype(
-            str).str.lower().str.strip()
+    # Process all_assisted data (non-NBA players) if available
+    df_all_computed = None
+    if df_all_assisted is not None:
+        if "Player_lower" in df_all_assisted.columns:
+            df_all_assisted["player_lower"] = df_all_assisted["Player_lower"].astype(
+                str).str.lower().str.strip()
+        elif "player_lower" not in df_all_assisted.columns:
+            df_all_assisted["player_lower"] = df_all_assisted["Player"].astype(
+                str).str.lower().str.strip()
 
-    # Compute metrics for all_assisted data
-    from utils import compute_metrics
-    df_all_computed = compute_metrics(df_all_assisted, df_career, df_bart)
+        # Compute metrics for all_assisted data
+        from utils import compute_metrics
+        df_all_computed = compute_metrics(df_all_assisted, df_career, df_bart)
 
     # Add dunk metrics to NBA dataset (df) as well
     if "DunkMade" in df.columns and "DunkMiss" in df.columns:
@@ -273,15 +280,24 @@ with tab1:
         # === SIDEBAR FILTERS ===
     st.sidebar.markdown("**Filters**")
 
-    # Player type filter
+    # Player type filter - only show all options if all_assisted data is available
+    if df_all_computed is not None:
+        player_type_options = ["NBA Players Only",
+                               "Non-NBA Players Only", "All College Players"]
+    else:
+        player_type_options = ["NBA Players Only"]
+
     player_type = st.sidebar.radio(
         "Player Dataset",
-        ["NBA Players Only", "Non-NBA Players Only", "All College Players"],
+        player_type_options,
         index=0,
-        help="Filter by players who made it to the NBA, didn't make it to NBA, or show everyone"
+        help="Filter by players who made it to the NBA" +
+        (", didn't make it to NBA, or show everyone" if df_all_computed is not None else "")
     )
-    show_all_players = (player_type == "All College Players")
-    show_non_nba_only = (player_type == "Non-NBA Players Only")
+    show_all_players = (
+        player_type == "All College Players") if df_all_computed is not None else False
+    show_non_nba_only = (
+        player_type == "Non-NBA Players Only") if df_all_computed is not None else False
 
     # Footer info (after player type is defined)
     if show_non_nba_only:
@@ -366,12 +382,12 @@ with tab1:
     sort_by = sort_mapping[sort_display_selected]
 
     # Get roles and years from the appropriate dataset
-    if show_non_nba_only:
+    if show_non_nba_only and df_all_computed is not None:
         # Filter to only non-NBA players (players in all_assisted but not in nba_complete)
         nba_players_lower = set(df["player_lower"].str.lower().str.strip())
         base_df = df_all_computed[~df_all_computed["player_lower"].str.lower(
         ).str.strip().isin(nba_players_lower)].copy()
-    elif show_all_players:
+    elif show_all_players and df_all_computed is not None:
         base_df = df_all_computed
     else:
         base_df = df
@@ -426,7 +442,14 @@ with tab1:
             "<hr style='border:0.5px solid #333;'>", unsafe_allow_html=True)
 
     # Apply filters - use the appropriate dataset based on toggle
-    base_df = df_all_computed if show_all_players else df
+    if show_all_players and df_all_computed is not None:
+        base_df = df_all_computed
+    elif show_non_nba_only and df_all_computed is not None:
+        nba_players_lower = set(df["player_lower"].str.lower().str.strip())
+        base_df = df_all_computed[~df_all_computed["player_lower"].str.lower(
+        ).str.strip().isin(nba_players_lower)].copy()
+    else:
+        base_df = df
     filt = base_df.copy()
 
     # Role filtering - handle "Unknown" option
