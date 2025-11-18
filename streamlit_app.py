@@ -352,14 +352,15 @@ with tab1:
     }
 
     # Create sort options with pretty names
-    sort_options = ["Player"] + stat_cols
-    sort_display = ["Player Name"] + [pretty_names[col] for col in stat_cols]
+    sort_options = ["Player", "Year_final", "Role_final"] + stat_cols
+    sort_display = ["Player Name", "Year", "Role"] + \
+        [pretty_names[col] for col in stat_cols]
     sort_mapping = dict(zip(sort_display, sort_options))
 
     sort_display_selected = st.sidebar.selectbox(
         "Sort by",
         sort_display,
-        index=15,  # Default to "Overall Assisted%" (Total_Assisted%)
+        index=17,  # Default to "Overall Assisted%" (Total_Assisted%)
         help="Choose column to sort results by"
     )
     sort_by = sort_mapping[sort_display_selected]
