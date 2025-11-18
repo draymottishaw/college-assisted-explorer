@@ -16,9 +16,9 @@ Thumbs.db
 *.tmp
 *.log
 
-# Data files (if large)
-*.csv
-*.json
+# Data files excluded (keep CSV files for deployment)
+# *.csv
+# *.json
 *.xlsx
 *.pkl
 
