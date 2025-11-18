@@ -408,9 +408,9 @@ with tab1:
     years_with_unknown = years + ["Unknown"] if has_unknown_years else years
 
     selected_roles = st.sidebar.multiselect(
-        "Role", roles_with_unknown, default=roles)
+        "Role", roles_with_unknown, default=roles_with_unknown)
     selected_years = st.sidebar.multiselect(
-        "Year", years_with_unknown, default=years)
+        "Year", years_with_unknown, default=years_with_unknown)
     search_txt = st.sidebar.text_input(
         "Search Player", placeholder="Type player name...")
 
