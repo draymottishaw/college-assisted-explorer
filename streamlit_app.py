@@ -752,9 +752,14 @@ with tab1:
 
     # Performance optimization: only apply styling to limited rows
     if len(filt) > 0:
+        # Format only percentage columns, not volume columns
+        volume_cols_set = {"Total_Att", "RimAtt", "Mid_Att", "Three_Att"}
+        pct_cols_to_format = {
+            c: "{:.1%}" for c in available_pct_cols if c not in volume_cols_set}
+
         styled_df = (
             filt[display_cols]
-            .style.format({c: "{:.1%}" for c in available_pct_cols})
+            .style.format(pct_cols_to_format)
             .apply(highlight_row, axis=1)
         )
 
