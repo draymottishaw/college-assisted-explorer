@@ -270,13 +270,14 @@ with st.spinner("Initializing NCAA-NBA Player Explorer..."):
     df, df_complete, df_nba_players, df_career, df_bart, df_all_computed, df_2026_current = load_data()
 
 # Create combined dataset for comparison/similarity tabs (NBA + 2026 current)
-if df_2026_current is not None:
+if df_2026_current is not None and len(df_2026_current) > 0:
     df_combined = pd.concat([df, df_2026_current], ignore_index=True)
     # Remove duplicates, keeping NBA version if player is in both
     df_combined = df_combined.drop_duplicates(
         subset=['player_lower'], keep='first')
 else:
     df_combined = df
+    df_2026_current = None  # Ensure it's explicitly None if empty
 
 
 # ============================================================
@@ -732,7 +733,13 @@ with tab1:
 with tab2:
     from pages._Player_Compare import player_compare_app
     # Pass the combined df (NBA + 2026 current players) and separate datasets
-    player_compare_app(df_combined, df_career, df_bart, df, df_2026_current)
+    player_compare_app(
+        df_merged=df_combined,
+        df_career=df_career,
+        df_bart=df_bart,
+        df_nba=df,
+        df_2026=df_2026_current
+    )
 
 # ============================================================
 # TAB 3 — PLAYER SIMILARITY & RADAR CHARTS
