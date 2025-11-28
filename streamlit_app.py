@@ -361,33 +361,29 @@ with tab1:
 
     # Zone-specific volume filters (collapsed by default)
     with st.sidebar.expander("Zone-Specific Volume Filters"):
-        min_rim = st.number_input(
+        min_rim_input = st.text_input(
             "Minimum Rim Attempts",
-            min_value=0,
-            max_value=3000,
-            value=0,
-            step=25,
+            value="0",
             help="Filter by minimum rim attempts",
             key="min_rim_filter"
         )
-        min_mid = st.number_input(
+        min_rim = int(min_rim_input) if min_rim_input.isdigit() else 0
+
+        min_mid_input = st.text_input(
             "Minimum Mid Attempts",
-            min_value=0,
-            max_value=2000,
-            value=0,
-            step=25,
+            value="0",
             help="Filter by minimum midrange attempts",
             key="min_mid_filter"
         )
-        min_three = st.number_input(
+        min_mid = int(min_mid_input) if min_mid_input.isdigit() else 0
+
+        min_three_input = st.text_input(
             "Minimum Three Attempts",
-            min_value=0,
-            max_value=2000,
-            value=0,
-            step=25,
+            value="0",
             help="Filter by minimum three-point attempts",
             key="min_three_filter"
         )
+        min_three = int(min_three_input) if min_three_input.isdigit() else 0
 
     # Footer info (after player type is defined)
     if show_non_nba_only:
@@ -508,10 +504,18 @@ with tab1:
     roles_with_unknown = roles + ["Unknown"] if has_unknown_roles else roles
     years_with_unknown = years + ["Unknown"] if has_unknown_years else years
 
-    selected_roles = st.sidebar.multiselect(
-        "Role", roles_with_unknown, default=roles_with_unknown, key=f"roles_{player_type}")
-    selected_years = st.sidebar.multiselect(
-        "Year", years_with_unknown, default=years_with_unknown, key=f"years_{player_type}")
+    # Only show role/year filters if there are options available
+    if roles_with_unknown:
+        selected_roles = st.sidebar.multiselect(
+            "Role", roles_with_unknown, default=roles_with_unknown, key=f"roles_{player_type}")
+    else:
+        selected_roles = []
+
+    if years_with_unknown:
+        selected_years = st.sidebar.multiselect(
+            "Year", years_with_unknown, default=years_with_unknown, key=f"years_{player_type}")
+    else:
+        selected_years = []
     search_txt = st.sidebar.text_input(
         "Search Player", placeholder="Type player name...")
 
