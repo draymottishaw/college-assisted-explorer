@@ -269,6 +269,15 @@ def load_data():
 with st.spinner("Initializing NCAA-NBA Player Explorer..."):
     df, df_complete, df_nba_players, df_career, df_bart, df_all_computed, df_2026_current = load_data()
 
+# Create combined dataset for comparison/similarity tabs (NBA + 2026 current)
+if df_2026_current is not None:
+    df_combined = pd.concat([df, df_2026_current], ignore_index=True)
+    # Remove duplicates, keeping NBA version if player is in both
+    df_combined = df_combined.drop_duplicates(
+        subset=['player_lower'], keep='first')
+else:
+    df_combined = df
+
 
 # ============================================================
 # TABS
@@ -722,8 +731,8 @@ with tab1:
 # ============================================================
 with tab2:
     from pages._Player_Compare import player_compare_app
-    # Pass the merged df instead of df_complete
-    player_compare_app(df, df_career, df_bart)
+    # Pass the combined df (NBA + 2026 current players)
+    player_compare_app(df_combined, df_career, df_bart)
 
 # ============================================================
 # TAB 3 — PLAYER SIMILARITY & RADAR CHARTS
@@ -748,8 +757,8 @@ with tab3:
         'Three_FG%', 'Total_Rim%'
     ]
 
-    # Filter players with complete data for similarity analysis
-    df_similarity = df[similarity_metrics + ['Player', 'Role_final']].dropna()
+    # Filter players with complete data for similarity analysis (includes 2026 current players)
+    df_similarity = df_combined[similarity_metrics + ['Player', 'Role_final']].dropna()
 
     # Player search
     search_player = st.selectbox(
