@@ -299,13 +299,6 @@ with tab1:
     # === SIDEBAR FILTERS ===
     st.sidebar.markdown("**Filters**")
 
-    # Clear filters button
-    if st.sidebar.button("🔄 Clear All Filters", use_container_width=True, help="Reset all filters to default values"):
-        # Clear all session state keys
-        for key in list(st.session_state.keys()):
-            del st.session_state[key]
-        st.rerun()
-
     # Player type filter - only show all options if all_assisted data is available
     if df_all_computed is not None:
         player_type_options = ["NBA Players Only", "2026 Current Players",
@@ -533,7 +526,11 @@ with tab1:
 
     range_filters = {}
 
-    for col in stat_cols:
+    # Only create range filters for percentage columns, not volume columns
+    volume_cols_to_skip = ["Total_Att", "RimAtt", "Mid_Att", "Three_Att"]
+    query_cols = [col for col in stat_cols if col not in volume_cols_to_skip]
+
+    for col in query_cols:
         st.sidebar.markdown(f"**{pretty_names.get(col, col)}**")
         c1, c2 = st.sidebar.columns(2)
         with c1:
