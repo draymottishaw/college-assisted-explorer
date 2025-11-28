@@ -31,7 +31,6 @@ def player_compare_app(df_merged: pd.DataFrame,
         # If no 2026 data, all players are considered NBA players
         nba_players = set(df["Player"].dropna().unique())
         current_2026_players = set()
-        current_2026_players = set()
 
     # ========================================================
     # SINGLE PLAYER SECTION
