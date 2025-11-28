@@ -530,29 +530,86 @@ with tab1:
     volume_cols_to_skip = ["Total_Att", "RimAtt", "Mid_Att", "Three_Att"]
     query_cols = [col for col in stat_cols if col not in volume_cols_to_skip]
 
-    for col in query_cols:
-        st.sidebar.markdown(f"**{pretty_names.get(col, col)}**")
-        c1, c2 = st.sidebar.columns(2)
-        with c1:
-            min_val = st.number_input(
-                f"min_{col}", min_value=0.0, max_value=100.0,
-                value=0.0, step=0.5, label_visibility="collapsed"
-            )
-            st.markdown("<small style='color:#aaa;'>Min</small>",
-                        unsafe_allow_html=True)
-        with c2:
-            max_val = st.number_input(
-                f"max_{col}", min_value=0.0, max_value=100.0,
-                value=100.0, step=0.5, label_visibility="collapsed"
-            )
-            st.markdown("<small style='color:#aaa;'>Max</small>",
-                        unsafe_allow_html=True)
+    # Group columns by type for organized expanders
+    fg_pct_cols = ["NonDunk_Rim%", "Total_Rim%",
+                   "Mid_FG%", "Three_FG%", "TwoPt_FG%", "Dunk_FG%"]
+    freq_cols = ["Rim_Freq", "Mid_Freq",
+                 "Three_Freq", "TwoPt_Freq", "Dunk_Freq"]
+    assisted_cols = ["NonDunk_Assisted%", "Total_Assisted_Rim%",
+                     "Mid_Assisted%", "Three_Assisted%", "TwoPt_Assisted%", "Total_Assisted%"]
 
-        range_filters[col] = (min_val / 100, max_val / 100)
-        st.sidebar.markdown(
-            "<hr style='border:0.5px solid #333;'>", unsafe_allow_html=True)
+    # FG% Filters
+    with st.sidebar.expander("🎯 Field Goal % Filters"):
+        for col in fg_pct_cols:
+            if col in query_cols:
+                st.markdown(f"**{pretty_names.get(col, col)}**")
+                c1, c2 = st.columns(2)
+                with c1:
+                    min_val = st.number_input(
+                        f"min_{col}", min_value=0.0, max_value=100.0,
+                        value=0.0, step=0.5, label_visibility="collapsed", key=f"min_{col}"
+                    )
+                    st.markdown(
+                        "<small style='color:#aaa;'>Min</small>", unsafe_allow_html=True)
+                with c2:
+                    max_val = st.number_input(
+                        f"max_{col}", min_value=0.0, max_value=100.0,
+                        value=100.0, step=0.5, label_visibility="collapsed", key=f"max_{col}"
+                    )
+                    st.markdown(
+                        "<small style='color:#aaa;'>Max</small>", unsafe_allow_html=True)
+                range_filters[col] = (min_val / 100, max_val / 100)
+                st.markdown("<hr style='border:0.5px solid #333;'>",
+                            unsafe_allow_html=True)
 
-    # Apply filters - use the appropriate dataset based on toggle
+    # Shot Frequency Filters
+    with st.sidebar.expander("📊 Shot Frequency Filters"):
+        for col in freq_cols:
+            if col in query_cols:
+                st.markdown(f"**{pretty_names.get(col, col)}**")
+                c1, c2 = st.columns(2)
+                with c1:
+                    min_val = st.number_input(
+                        f"min_{col}", min_value=0.0, max_value=100.0,
+                        value=0.0, step=0.5, label_visibility="collapsed", key=f"min_{col}"
+                    )
+                    st.markdown(
+                        "<small style='color:#aaa;'>Min</small>", unsafe_allow_html=True)
+                with c2:
+                    max_val = st.number_input(
+                        f"max_{col}", min_value=0.0, max_value=100.0,
+                        value=100.0, step=0.5, label_visibility="collapsed", key=f"max_{col}"
+                    )
+                    st.markdown(
+                        "<small style='color:#aaa;'>Max</small>", unsafe_allow_html=True)
+                range_filters[col] = (min_val / 100, max_val / 100)
+                st.markdown("<hr style='border:0.5px solid #333;'>",
+                            unsafe_allow_html=True)
+
+    # Assisted % Filters
+    with st.sidebar.expander("🤝 Assisted % Filters"):
+        for col in assisted_cols:
+            if col in query_cols:
+                st.markdown(f"**{pretty_names.get(col, col)}**")
+                c1, c2 = st.columns(2)
+                with c1:
+                    min_val = st.number_input(
+                        f"min_{col}", min_value=0.0, max_value=100.0,
+                        value=0.0, step=0.5, label_visibility="collapsed", key=f"min_{col}"
+                    )
+                    st.markdown(
+                        "<small style='color:#aaa;'>Min</small>", unsafe_allow_html=True)
+                with c2:
+                    max_val = st.number_input(
+                        f"max_{col}", min_value=0.0, max_value=100.0,
+                        value=100.0, step=0.5, label_visibility="collapsed", key=f"max_{col}"
+                    )
+                    st.markdown(
+                        "<small style='color:#aaa;'>Max</small>", unsafe_allow_html=True)
+                range_filters[col] = (min_val / 100, max_val / 100)
+                # Apply filters - use the appropriate dataset based on toggle
+                st.markdown("<hr style='border:0.5px solid #333;'>",
+                            unsafe_allow_html=True)
     if show_all_players and df_all_computed is not None:
         base_df = df_all_computed
     elif show_non_nba_only and df_all_computed is not None:
