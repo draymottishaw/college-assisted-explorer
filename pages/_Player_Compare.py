@@ -24,9 +24,17 @@ def player_compare_app(df_merged: pd.DataFrame,
     df = df_merged.copy()
 
     # Separate NBA and 2026 players for dropdown filtering
-    if df_nba is not None and df_2026 is not None and len(df_2026) > 0:
-        nba_players = set(df_nba["Player"].dropna().unique())
-        current_2026_players = set(df_2026["Player"].dropna().unique())
+    if df_nba is not None and df_2026 is not None:
+        try:
+            if len(df_2026) > 0:
+                nba_players = set(df_nba["Player"].dropna().unique())
+                current_2026_players = set(df_2026["Player"].dropna().unique())
+            else:
+                nba_players = set(df["Player"].dropna().unique())
+                current_2026_players = set()
+        except:
+            nba_players = set(df["Player"].dropna().unique())
+            current_2026_players = set()
     else:
         # If no 2026 data, all players are considered NBA players
         nba_players = set(df["Player"].dropna().unique())
