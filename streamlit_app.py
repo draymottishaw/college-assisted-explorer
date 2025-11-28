@@ -347,18 +347,6 @@ with tab1:
         max_year = min_year
 
     # Volume Filter
-    st.sidebar.markdown("---")
-    st.sidebar.markdown("**📈 Volume Filters**")
-
-    min_volume = st.sidebar.number_input(
-        "Minimum Total Attempts",
-        min_value=0,
-        max_value=5000,
-        value=0,
-        step=50,
-        help="Filter players by minimum career shot attempts (Total_Att). Higher values = more reliable data."
-    )
-
     # Footer info (after player type is defined)
     if show_non_nba_only:
         player_count_text = "28,290 NCAA players who did NOT make it to the NBA"
@@ -512,8 +500,16 @@ with tab1:
     assisted_cols = ["NonDunk_Assisted%", "Total_Assisted_Rim%",
                      "Mid_Assisted%", "Three_Assisted%", "TwoPt_Assisted%", "Total_Assisted%"]
 
-    # Zone-Specific Volume Filters
-    with st.sidebar.expander("📈 Zone-Specific Volume Filters"):
+    # Volume Filters
+    with st.sidebar.expander("📈 Volume Filters"):
+        min_volume_input = st.text_input(
+            "Minimum Total Attempts",
+            value="0",
+            help="Filter by minimum total career attempts",
+            key="min_total_filter"
+        )
+        min_volume = int(min_volume_input) if min_volume_input.isdigit() else 0
+
         min_rim_input = st.text_input(
             "Minimum Rim Attempts",
             value="0",
