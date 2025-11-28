@@ -60,6 +60,19 @@ def player_compare_app(df_merged: pd.DataFrame,
 
     c1, c2 = st.columns([2, 1])
     with c1:
+        # Display volume first
+        st.markdown("##### 📈 Volume")
+        vol_metrics = {
+            "Total Attempts": int(prow.get("Total_Att", 0)),
+            "Rim Attempts": int(prow.get("RimAtt", 0)),
+            "Mid Attempts": int(prow.get("Mid_Att", 0)),
+            "Three Attempts": int(prow.get("Three_Att", 0)),
+        }
+        dfv = pd.DataFrame(list(vol_metrics.items()),
+                           columns=["Metric", "Value"])
+        st.table(dfv)
+
+        st.markdown("##### 🎯 Percentages")
         metrics = {
             "Non-dunk Rim%": prow.get("NonDunk_Rim%"),
             "Non-dunk Assisted%": prow.get("NonDunk_Assisted%"),
@@ -193,6 +206,9 @@ def player_compare_app(df_merged: pd.DataFrame,
         st.markdown(
             f"**Role:** {pa.get('Role_final','—')}  |  **Year:** {pa.get('Year_final','—')}"
         )
+        st.markdown(
+            f"**Volume:** {int(pa.get('Total_Att', 0)):,} total attempts ({int(pa.get('RimAtt', 0)):,} rim, {int(pa.get('Mid_Att', 0)):,} mid, {int(pa.get('Three_Att', 0)):,} three)"
+        )
 
         metrics = {
             "Non-dunk Rim%": pa.get("NonDunk_Rim%"),
@@ -277,6 +293,9 @@ def player_compare_app(df_merged: pd.DataFrame,
         st.markdown(f"### {player_b}")
         st.markdown(
             f"**Role:** {pb.get('Role_final','—')}  |  **Year:** {pb.get('Year_final','—')}"
+        )
+        st.markdown(
+            f"**Volume:** {int(pb.get('Total_Att', 0)):,} total attempts ({int(pb.get('RimAtt', 0)):,} rim, {int(pb.get('Mid_Att', 0)):,} mid, {int(pb.get('Three_Att', 0)):,} three)"
         )
 
         metrics = {

@@ -303,6 +303,9 @@ with tab1:
     with col1:
         st.markdown(
             """
+            **📈 Volume**  
+            **Total_Att** — Total career shot attempts
+            
             **🎯 Field Goal %**  
             **NonDunk_Rim%** — FG% at rim excluding dunks  
             **Total_Rim%** — FG% at rim including dunks  
@@ -391,6 +394,19 @@ with tab1:
         st.sidebar.warning("⚠️ 'From' year cannot be greater than 'To' year")
         max_year = min_year
 
+    # Volume Filter
+    st.sidebar.markdown("---")
+    st.sidebar.markdown("**📈 Volume Filter**")
+
+    min_volume = st.sidebar.number_input(
+        "Minimum Total Attempts",
+        min_value=0,
+        max_value=5000,
+        value=0,
+        step=50,
+        help="Filter players by minimum career shot attempts (Total_Att). Higher values = more reliable data."
+    )
+
     # Footer info (after player type is defined)
     if show_non_nba_only:
         player_count_text = "28,290 NCAA players who did NOT make it to the NBA"
@@ -435,13 +451,14 @@ with tab1:
 
     # Create sort options from all available stat columns
     stat_cols = [
-        "NonDunk_Rim%", "Total_Rim%", "Mid_FG%", "Three_FG%", "TwoPt_FG%",
+        "Total_Att", "NonDunk_Rim%", "Total_Rim%", "Mid_FG%", "Three_FG%", "TwoPt_FG%",
         "Rim_Freq", "Mid_Freq", "Three_Freq", "TwoPt_Freq", "Dunk_Freq", "Dunk_FG%",
         "NonDunk_Assisted%", "Total_Assisted_Rim%", "Mid_Assisted%",
         "Three_Assisted%", "TwoPt_Assisted%", "Total_Assisted%"
     ]
 
     pretty_names = {
+        "Total_Att": "Total Attempts",
         "NonDunk_Rim%": "Non-Dunk Rim FG%",
         "Total_Rim%": "Total Rim FG%",
         "Mid_FG%": "Midrange FG%",
@@ -596,6 +613,11 @@ with tab1:
     if search_txt:
         filt = filt[filt["Player"].str.contains(
             search_txt, case=False, na=False)]
+
+    # Apply volume filter
+    if min_volume > 0 and "Total_Att" in filt.columns:
+        filt = filt[filt["Total_Att"] >= min_volume]
+
     for col, (low, high) in range_filters.items():
         if col not in filt.columns:
             continue  # skip columns that don't exist to avoid KeyError
@@ -656,13 +678,15 @@ with tab1:
 
     # Only include columns that actually exist in the DataFrame
     available_pct_cols = [col for col in stat_cols if col in filt.columns]
-    display_cols = ["Player", "Year_final", "Role_final"] + available_pct_cols
+    # Put Total_Att first among stats for visibility
+    display_cols = ["Player", "Year_final", "Role_final", "Total_Att"] + \
+        [col for col in available_pct_cols if col != "Total_Att"]
 
     def highlight_row(row):
         role = row["Role_final"]
         styles = []
         for col in display_cols:
-            if col in available_pct_cols:
+            if col in available_pct_cols and col != "Total_Att":  # Don't color Total_Att
                 val = row.get(col)  # Use .get() to safely access columns
                 avg = role_avg_map.get((role, col))
                 if pd.notna(val) and pd.notna(avg) and avg != 0:
