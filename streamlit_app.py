@@ -504,18 +504,20 @@ with tab1:
     roles_with_unknown = roles + ["Unknown"] if has_unknown_roles else roles
     years_with_unknown = years + ["Unknown"] if has_unknown_years else years
 
-    # Only show role/year filters if there are options available
+    # Show role/year filters - use N/A if no data to prevent filtering issues
     if roles_with_unknown:
         selected_roles = st.sidebar.multiselect(
             "Role", roles_with_unknown, default=roles_with_unknown, key=f"roles_{player_type}")
     else:
-        selected_roles = []
+        selected_roles = None  # None means don't filter by role
+        st.sidebar.info("⚠️ No Role data for this dataset")
 
     if years_with_unknown:
         selected_years = st.sidebar.multiselect(
             "Year", years_with_unknown, default=years_with_unknown, key=f"years_{player_type}")
     else:
-        selected_years = []
+        selected_years = None  # None means don't filter by year
+        st.sidebar.info("⚠️ No Year data for this dataset")
     search_txt = st.sidebar.text_input(
         "Search Player", placeholder="Type player name...")
 
@@ -560,8 +562,8 @@ with tab1:
         base_df = df
     filt = base_df.copy()
 
-    # Role filtering - handle "Unknown" option
-    if selected_roles:
+    # Role filtering - handle "Unknown" option and None (no data)
+    if selected_roles is not None and selected_roles:
         if "Unknown" in selected_roles:
             # Include players with no role data
             known_roles = [r for r in selected_roles if r != "Unknown"]
@@ -574,8 +576,8 @@ with tab1:
             role_mask = base_df["Role_final"].isin(selected_roles)
         filt = filt[role_mask]
 
-    # Year filtering - handle "Unknown" option
-    if selected_years:
+    # Year filtering - handle "Unknown" option and None (no data)
+    if selected_years is not None and selected_years:
         if "Unknown" in selected_years:
             known_years = [y for y in selected_years if y != "Unknown"]
             if known_years:
