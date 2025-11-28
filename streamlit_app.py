@@ -128,6 +128,7 @@ PATH_CAREER = ROOT / "temp_data" / "career_drafted.csv"
 PATH_BART = ROOT / "temp_data" / "Bart_Core_Positions.csv"
 PATH_ALL_ASSISTED = ROOT / "temp_data" / "all_assisted.csv"
 PATH_2026_STATS = ROOT / "temp_data" / "2026_stats.csv"
+PATH_2026_CURRENT = ROOT / "temp_data" / "2026_current_players.csv"
 
 
 @st.cache_data
@@ -146,6 +147,12 @@ def load_data():
         df_nba_players = pd.read_csv(PATH_NBA_PLAYERS, low_memory=False)
         df_career = pd.read_csv(PATH_CAREER, low_memory=False)
         df_bart = pd.read_csv(PATH_BART, low_memory=False)
+
+        # Load 2026 current players if available
+        if PATH_2026_CURRENT.exists():
+            df_2026_current = pd.read_csv(PATH_2026_CURRENT, low_memory=False)
+        else:
+            df_2026_current = None
 
         # Load 2026 stats if available
         if PATH_2026_STATS.exists():
@@ -245,12 +252,22 @@ def load_data():
             df["Total_Att"].replace({0: pd.NA}))
         df["Dunk_FG%"] = df["DunkMade"].div(df["DunkAtt"].replace({0: pd.NA}))
 
-    return df, df_complete, df_nba_players, df_career, df_bart, df_all_computed
+    # Process 2026 current players if available
+    if df_2026_current is not None:
+        # Ensure player_lower exists
+        if "player_lower" not in df_2026_current.columns:
+            df_2026_current["player_lower"] = df_2026_current["Player"].astype(
+                str).str.lower().str.strip()
+        # Add Role_final and Year_final
+        df_2026_current["Role_final"] = df_2026_current["Role"]
+        df_2026_current["Year_final"] = df_2026_current["YR"]
+
+    return df, df_complete, df_nba_players, df_career, df_bart, df_all_computed, df_2026_current
 
 
 # Load data with progress indicator
 with st.spinner("Initializing NCAA-NBA Player Explorer..."):
-    df, df_complete, df_nba_players, df_career, df_bart, df_all_computed = load_data()
+    df, df_complete, df_nba_players, df_career, df_bart, df_all_computed, df_2026_current = load_data()
 
 
 # ============================================================
@@ -319,22 +336,23 @@ with tab1:
 
     # Player type filter - only show all options if all_assisted data is available
     if df_all_computed is not None:
-        player_type_options = ["NBA Players Only",
+        player_type_options = ["NBA Players Only", "2026 Current Players",
                                "Non-NBA Players Only", "All College Players"]
     else:
-        player_type_options = ["NBA Players Only"]
+        player_type_options = ["NBA Players Only", "2026 Current Players"]
 
     player_type = st.sidebar.radio(
         "Player Dataset",
         player_type_options,
         index=0,
-        help="Filter by players who made it to the NBA" +
+        help="Filter by players who made it to the NBA, 2026 current season players" +
         (", didn't make it to NBA, or show everyone" if df_all_computed is not None else "")
     )
     show_all_players = (
         player_type == "All College Players") if df_all_computed is not None else False
     show_non_nba_only = (
         player_type == "Non-NBA Players Only") if df_all_computed is not None else False
+    show_2026_only = (player_type == "2026 Current Players")
 
     # Draft Year Range Filter (based on when they left college)
     st.sidebar.markdown("---")
@@ -368,6 +386,8 @@ with tab1:
         player_count_text = "28,290 NCAA players who did NOT make it to the NBA"
     elif show_all_players:
         player_count_text = "all 29,525 NCAA Division I players (2010-2025)"
+    elif show_2026_only:
+        player_count_text = f"{len(df_2026_current) if df_2026_current is not None else 0:,} NCAA players in the 2026 season"
     else:
         player_count_text = "1,235 NCAA players who made it to the NBA"
 
@@ -512,6 +532,9 @@ with tab1:
         nba_players_lower = set(df["player_lower"].str.lower().str.strip())
         base_df = df_all_computed[~df_all_computed["player_lower"].str.lower(
         ).str.strip().isin(nba_players_lower)].copy()
+    elif show_2026_only and df_2026_current is not None:
+        # Show only 2026 current players
+        base_df = df_2026_current.copy()
     else:
         base_df = df
     filt = base_df.copy()
@@ -544,13 +567,20 @@ with tab1:
         filt = filt[year_mask]
 
     # Draft year filtering (based on Last_Season = final college year)
-    if 'Last_Season' in filt.columns:
+    if 'Last_Season' in filt.columns and not show_2026_only:
         # Filter players whose final college season falls within the range
-        # Last_Season represents when they left college (approximate draft year)
-        season_mask = (
-            (filt['Last_Season'] >= min_year) &
-            (filt['Last_Season'] <= max_year)
-        ) | filt['Last_Season'].isna()
+        # For 2026, also include players who only have First_Season = 2026 (current season)
+        if max_year == 2026:
+            season_mask = (
+                ((filt['Last_Season'] >= min_year) & (filt['Last_Season'] <= max_year)) |
+                ((filt['Last_Season'].isna()) & (filt['First_Season']
+                 >= min_year) & (filt['First_Season'] <= max_year))
+            )
+        else:
+            season_mask = (
+                (filt['Last_Season'] >= min_year) &
+                (filt['Last_Season'] <= max_year)
+            ) | filt['Last_Season'].isna()
         filt = filt[season_mask]
 
     if search_txt:
