@@ -538,6 +538,9 @@ with tab1:
         ).str.strip().isin(nba_players_lower)].copy()
     elif show_all_players and df_all_computed is not None:
         base_df = df_all_computed
+    elif show_2026_only and df_2026_current is not None:
+        # Show only 2026 current players
+        base_df = df_2026_current.copy()
     else:
         base_df = df
 
