@@ -412,29 +412,32 @@ with tab1:
 
     # Zone-specific volume filters (collapsed by default)
     with st.sidebar.expander("Zone-Specific Volume Filters"):
-        min_rim = st.number_input(
+        min_rim = st.sidebar.number_input(
             "Minimum Rim Attempts",
             min_value=0,
             max_value=3000,
             value=0,
             step=25,
-            help="Filter by minimum rim attempts"
+            help="Filter by minimum rim attempts",
+            key="min_rim_filter"
         )
-        min_mid = st.number_input(
+        min_mid = st.sidebar.number_input(
             "Minimum Mid Attempts",
             min_value=0,
             max_value=2000,
             value=0,
             step=25,
-            help="Filter by minimum midrange attempts"
+            help="Filter by minimum midrange attempts",
+            key="min_mid_filter"
         )
-        min_three = st.number_input(
+        min_three = st.sidebar.number_input(
             "Minimum Three Attempts",
             min_value=0,
             max_value=2000,
             value=0,
             step=25,
-            help="Filter by minimum three-point attempts"
+            help="Filter by minimum three-point attempts",
+            key="min_three_filter"
         )
 
     # Footer info (after player type is defined)
