@@ -304,7 +304,10 @@ with tab1:
         st.markdown(
             """
             **📈 Volume**  
-            **Total_Att** — Total career shot attempts
+            **Total_Att** — Total career shot attempts  
+            **RimAtt** — Rim attempts  
+            **Mid_Att** — Midrange attempts  
+            **Three_Att** — Three-point attempts
             
             **🎯 Field Goal %**  
             **NonDunk_Rim%** — FG% at rim excluding dunks  
@@ -396,7 +399,7 @@ with tab1:
 
     # Volume Filter
     st.sidebar.markdown("---")
-    st.sidebar.markdown("**📈 Volume Filter**")
+    st.sidebar.markdown("**📈 Volume Filters**")
 
     min_volume = st.sidebar.number_input(
         "Minimum Total Attempts",
@@ -406,6 +409,33 @@ with tab1:
         step=50,
         help="Filter players by minimum career shot attempts (Total_Att). Higher values = more reliable data."
     )
+
+    # Zone-specific volume filters (collapsed by default)
+    with st.sidebar.expander("Zone-Specific Volume Filters"):
+        min_rim = st.number_input(
+            "Minimum Rim Attempts",
+            min_value=0,
+            max_value=3000,
+            value=0,
+            step=25,
+            help="Filter by minimum rim attempts"
+        )
+        min_mid = st.number_input(
+            "Minimum Mid Attempts",
+            min_value=0,
+            max_value=2000,
+            value=0,
+            step=25,
+            help="Filter by minimum midrange attempts"
+        )
+        min_three = st.number_input(
+            "Minimum Three Attempts",
+            min_value=0,
+            max_value=2000,
+            value=0,
+            step=25,
+            help="Filter by minimum three-point attempts"
+        )
 
     # Footer info (after player type is defined)
     if show_non_nba_only:
@@ -451,7 +481,8 @@ with tab1:
 
     # Create sort options from all available stat columns
     stat_cols = [
-        "Total_Att", "NonDunk_Rim%", "Total_Rim%", "Mid_FG%", "Three_FG%", "TwoPt_FG%",
+        "Total_Att", "RimAtt", "Mid_Att", "Three_Att",
+        "NonDunk_Rim%", "Total_Rim%", "Mid_FG%", "Three_FG%", "TwoPt_FG%",
         "Rim_Freq", "Mid_Freq", "Three_Freq", "TwoPt_Freq", "Dunk_Freq", "Dunk_FG%",
         "NonDunk_Assisted%", "Total_Assisted_Rim%", "Mid_Assisted%",
         "Three_Assisted%", "TwoPt_Assisted%", "Total_Assisted%"
@@ -459,6 +490,9 @@ with tab1:
 
     pretty_names = {
         "Total_Att": "Total Attempts",
+        "RimAtt": "Rim Attempts",
+        "Mid_Att": "Mid Attempts",
+        "Three_Att": "Three Attempts",
         "NonDunk_Rim%": "Non-Dunk Rim FG%",
         "Total_Rim%": "Total Rim FG%",
         "Mid_FG%": "Midrange FG%",
@@ -487,7 +521,8 @@ with tab1:
     sort_display_selected = st.sidebar.selectbox(
         "Sort by",
         sort_display,
-        index=17,  # Default to "Overall Assisted%" (Total_Assisted%)
+        # Default to "Overall Assisted%" (Total_Assisted%) - adjusted for new volume columns
+        index=20,
         help="Choose column to sort results by"
     )
     sort_by = sort_mapping[sort_display_selected]
@@ -614,9 +649,18 @@ with tab1:
         filt = filt[filt["Player"].str.contains(
             search_txt, case=False, na=False)]
 
-    # Apply volume filter
+    # Apply volume filters
     if min_volume > 0 and "Total_Att" in filt.columns:
         filt = filt[filt["Total_Att"] >= min_volume]
+
+    if min_rim > 0 and "RimAtt" in filt.columns:
+        filt = filt[filt["RimAtt"] >= min_rim]
+
+    if min_mid > 0 and "Mid_Att" in filt.columns:
+        filt = filt[filt["Mid_Att"] >= min_mid]
+
+    if min_three > 0 and "Three_Att" in filt.columns:
+        filt = filt[filt["Three_Att"] >= min_three]
 
     for col, (low, high) in range_filters.items():
         if col not in filt.columns:
@@ -678,15 +722,19 @@ with tab1:
 
     # Only include columns that actually exist in the DataFrame
     available_pct_cols = [col for col in stat_cols if col in filt.columns]
-    # Put Total_Att first among stats for visibility
-    display_cols = ["Player", "Year_final", "Role_final", "Total_Att"] + \
-        [col for col in available_pct_cols if col != "Total_Att"]
+    # Put volume columns first among stats for visibility
+    volume_cols = ["Total_Att", "RimAtt", "Mid_Att", "Three_Att"]
+    other_cols = [col for col in available_pct_cols if col not in volume_cols]
+    display_cols = ["Player", "Year_final",
+                    "Role_final"] + volume_cols + other_cols
 
     def highlight_row(row):
         role = row["Role_final"]
         styles = []
+        volume_cols_set = {"Total_Att", "RimAtt", "Mid_Att", "Three_Att"}
         for col in display_cols:
-            if col in available_pct_cols and col != "Total_Att":  # Don't color Total_Att
+            # Don't color volume columns or player info columns
+            if col in available_pct_cols and col not in volume_cols_set:
                 val = row.get(col)  # Use .get() to safely access columns
                 avg = role_avg_map.get((role, col))
                 if pd.notna(val) and pd.notna(avg) and avg != 0:
