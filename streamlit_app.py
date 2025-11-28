@@ -299,6 +299,33 @@ with tab1:
     show_non_nba_only = (
         player_type == "Non-NBA Players Only") if df_all_computed is not None else False
 
+    # Draft Year Range Filter (based on when they left college)
+    st.sidebar.markdown("---")
+    st.sidebar.markdown("**📅 Draft Year Range**")
+
+    min_year = st.sidebar.number_input(
+        "From Year",
+        min_value=2010,
+        max_value=2026,
+        value=2010,
+        step=1,
+        help="Players who would have been drafted starting this year (based on their final college season)"
+    )
+
+    max_year = st.sidebar.number_input(
+        "To Year",
+        min_value=2010,
+        max_value=2026,
+        value=2026,
+        step=1,
+        help="Players who would have been drafted through this year (based on their final college season)"
+    )
+
+    # Ensure min_year <= max_year
+    if min_year > max_year:
+        st.sidebar.warning("⚠️ 'From' year cannot be greater than 'To' year")
+        max_year = min_year
+
     # Footer info (after player type is defined)
     if show_non_nba_only:
         player_count_text = "28,290 NCAA players who did NOT make it to the NBA"
@@ -478,6 +505,16 @@ with tab1:
         else:
             year_mask = base_df["Year_final"].isin(selected_years)
         filt = filt[year_mask]
+
+    # Draft year filtering (based on Last_Season = final college year)
+    if 'Last_Season' in filt.columns:
+        # Filter players whose final college season falls within the range
+        # Last_Season represents when they left college (approximate draft year)
+        season_mask = (
+            (filt['Last_Season'] >= min_year) &
+            (filt['Last_Season'] <= max_year)
+        ) | filt['Last_Season'].isna()
+        filt = filt[season_mask]
 
     if search_txt:
         filt = filt[filt["Player"].str.contains(

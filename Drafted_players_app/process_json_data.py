@@ -74,7 +74,7 @@ def process_all_json_files():
 
     print(f"Unique players found: {df_all['Player'].nunique()}")
 
-    # Now aggregate career totals for each player
+    # Now aggregate career totals for each player (keeping season info)
     print("Aggregating career totals...")
 
     # Group by player and sum all shooting stats
@@ -92,6 +92,12 @@ def process_all_json_files():
         'DunkMiss': 'sum',
         'DunkAst': 'sum'
     }).reset_index()
+
+    # Add season range for each player (first and last season)
+    season_ranges = df_all.groupby('Player')['Year'].agg(
+        ['min', 'max']).reset_index()
+    season_ranges.columns = ['Player', 'First_Season', 'Last_Season']
+    career_totals = career_totals.merge(season_ranges, on='Player', how='left')
 
     print(f"Career totals calculated for {len(career_totals)} players")
 
