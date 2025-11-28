@@ -209,7 +209,7 @@ with tab1:
         """
         ---
         *Data source: BartTorvik.com* | *Page by Dray Mottishaw (@draymottishaw on Twitter/X)*  
-        📊 **Dataset**: Complete career totals for 1,235 NCAA players who made it to the NBA
+        📊 **Dataset**: Complete career totals for 1,235 NCAA players who made it to the NBA (2010-2026)
         """)
 
     st.markdown("<br>", unsafe_allow_html=True)

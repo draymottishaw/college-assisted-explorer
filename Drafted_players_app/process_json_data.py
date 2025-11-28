@@ -15,7 +15,7 @@ def process_all_json_files():
 
     # Process all JSON files
     all_player_data = []
-    years = range(2010, 2026)  # 2010-2025
+    years = range(2010, 2027)  # 2010-2026
 
     for year in years:
         json_file = f"temp_data/{year}_pbp_playerstat_array.json"

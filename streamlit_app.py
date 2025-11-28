@@ -311,7 +311,7 @@ with tab1:
         f"""
         ---
         *Data source: BartTorvik.com* | *Page by Dray Mottishaw (@draymottishaw on Twitter/X)*  
-        📊 **Dataset**: Complete career totals for {player_count_text}
+        📊 **Dataset**: Complete career totals for {player_count_text} (2010-2026)
         """)
 
     # Add performance controls
