@@ -127,6 +127,7 @@ PATH_NBA_PLAYERS = ROOT / "temp_data" / "nba_players.csv"
 PATH_CAREER = ROOT / "temp_data" / "career_drafted.csv"
 PATH_BART = ROOT / "temp_data" / "Bart_Core_Positions.csv"
 PATH_ALL_ASSISTED = ROOT / "temp_data" / "all_assisted.csv"
+PATH_2026_STATS = ROOT / "temp_data" / "2026_stats.csv"
 
 
 @st.cache_data
@@ -145,6 +146,12 @@ def load_data():
         df_nba_players = pd.read_csv(PATH_NBA_PLAYERS, low_memory=False)
         df_career = pd.read_csv(PATH_CAREER, low_memory=False)
         df_bart = pd.read_csv(PATH_BART, low_memory=False)
+
+        # Load 2026 stats if available
+        if PATH_2026_STATS.exists():
+            df_2026 = pd.read_csv(PATH_2026_STATS, low_memory=False)
+        else:
+            df_2026 = None
 
         # Load all_assisted if available (optional for cloud deployment)
         if PATH_ALL_ASSISTED.exists():
@@ -165,6 +172,15 @@ def load_data():
             df_temp["player_lower"] = df_temp["Player"].astype(
                 str).str.lower().str.strip()
 
+    # Add player_lower to 2026 stats if available
+    if df_2026 is not None:
+        if "Player_lower" in df_2026.columns:
+            df_2026["player_lower"] = df_2026["Player_lower"].astype(
+                str).str.lower().str.strip()
+        else:
+            df_2026["player_lower"] = df_2026["Player"].astype(
+                str).str.lower().str.strip()
+
     # Use complete NBA players data first (includes undrafted), then fallback to drafted-only data
     df_nba_slim = df_nba_players[["player_lower",
                                   "Role", "YR"]].drop_duplicates("player_lower")
@@ -173,17 +189,38 @@ def load_data():
     df_bart_slim = df_bart[["player_lower", "Role",
                             "YYR"]].drop_duplicates("player_lower")
 
-    # Merge with priority: nba_players (all) > career_drafted > bart
-    df = df_complete.merge(df_nba_slim, on="player_lower", how="left")
+    # Add 2026 stats slim version
+    if df_2026 is not None:
+        df_2026_slim = df_2026[["player_lower", "Role",
+                                "YR"]].drop_duplicates("player_lower")
+    else:
+        df_2026_slim = None
+
+    # Merge with priority: 2026_stats > nba_players (all) > career_drafted > bart
+    df = df_complete.copy()
+
+    if df_2026_slim is not None:
+        df = df.merge(df_2026_slim, on="player_lower",
+                      how="left", suffixes=("", "_2026"))
+
+    df = df.merge(df_nba_slim, on="player_lower", how="left",
+                  suffixes=("", "_nba") if df_2026_slim is not None else ("", ""))
     df = df.merge(df_career_slim, on="player_lower",
                   how="left", suffixes=("", "_career"))
     df = df.merge(df_bart_slim, on="player_lower",
                   how="left", suffixes=("", "_bart"))
 
-    # Create final role and year with priority order
-    df["Role_final"] = df["Role"].fillna(
-        df["Role_career"]).fillna(df["Role_bart"])
-    df["Year_final"] = df["YR"].fillna(df["YYR"])
+    # Create final role and year with priority order: 2026 > nba > career > bart
+    if df_2026_slim is not None:
+        df["Role_final"] = df.get("Role", df.get("Role_2026")).fillna(
+            df.get("Role_nba", df.get("Role"))).fillna(
+            df.get("Role_career")).fillna(df.get("Role_bart"))
+        df["Year_final"] = df.get("YR", df.get("YR_2026")).fillna(
+            df.get("YR_nba", df.get("YR")))
+    else:
+        df["Role_final"] = df["Role"].fillna(
+            df["Role_career"]).fillna(df["Role_bart"])
+        df["Year_final"] = df["YR"].fillna(df["YYR"])
 
     # Process all_assisted data (non-NBA players) if available
     df_all_computed = None
