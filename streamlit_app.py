@@ -359,32 +359,6 @@ with tab1:
         help="Filter players by minimum career shot attempts (Total_Att). Higher values = more reliable data."
     )
 
-    # Zone-specific volume filters (collapsed by default)
-    with st.sidebar.expander("Zone-Specific Volume Filters"):
-        min_rim_input = st.text_input(
-            "Minimum Rim Attempts",
-            value="0",
-            help="Filter by minimum rim attempts",
-            key="min_rim_filter"
-        )
-        min_rim = int(min_rim_input) if min_rim_input.isdigit() else 0
-
-        min_mid_input = st.text_input(
-            "Minimum Mid Attempts",
-            value="0",
-            help="Filter by minimum midrange attempts",
-            key="min_mid_filter"
-        )
-        min_mid = int(min_mid_input) if min_mid_input.isdigit() else 0
-
-        min_three_input = st.text_input(
-            "Minimum Three Attempts",
-            value="0",
-            help="Filter by minimum three-point attempts",
-            key="min_three_filter"
-        )
-        min_three = int(min_three_input) if min_three_input.isdigit() else 0
-
     # Footer info (after player type is defined)
     if show_non_nba_only:
         player_count_text = "28,290 NCAA players who did NOT make it to the NBA"
@@ -537,6 +511,32 @@ with tab1:
                  "Three_Freq", "TwoPt_Freq", "Dunk_Freq"]
     assisted_cols = ["NonDunk_Assisted%", "Total_Assisted_Rim%",
                      "Mid_Assisted%", "Three_Assisted%", "TwoPt_Assisted%", "Total_Assisted%"]
+
+    # Zone-Specific Volume Filters
+    with st.sidebar.expander("📈 Zone-Specific Volume Filters"):
+        min_rim_input = st.text_input(
+            "Minimum Rim Attempts",
+            value="0",
+            help="Filter by minimum rim attempts",
+            key="min_rim_filter"
+        )
+        min_rim = int(min_rim_input) if min_rim_input.isdigit() else 0
+
+        min_mid_input = st.text_input(
+            "Minimum Mid Attempts",
+            value="0",
+            help="Filter by minimum midrange attempts",
+            key="min_mid_filter"
+        )
+        min_mid = int(min_mid_input) if min_mid_input.isdigit() else 0
+
+        min_three_input = st.text_input(
+            "Minimum Three Attempts",
+            value="0",
+            help="Filter by minimum three-point attempts",
+            key="min_three_filter"
+        )
+        min_three = int(min_three_input) if min_three_input.isdigit() else 0
 
     # FG% Filters
     with st.sidebar.expander("🎯 Field Goal % Filters"):
