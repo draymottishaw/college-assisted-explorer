@@ -295,59 +295,8 @@ tab1, tab2, tab3 = st.tabs([
 with tab1:
     st.markdown("### Assisted Percentage Explorer")
 
-    st.markdown("**Column Descriptions**")
-
-    # Three-column layout for better organization
-    col1, col2, col3 = st.columns(3)
-
-    with col1:
-        st.markdown(
-            """
-            **📈 Volume**  
-            **Total_Att** — Total career shot attempts  
-            **RimAtt** — Rim attempts  
-            **Mid_Att** — Midrange attempts  
-            **Three_Att** — Three-point attempts
-            
-            **🎯 Field Goal %**  
-            **NonDunk_Rim%** — FG% at rim excluding dunks  
-            **Total_Rim%** — FG% at rim including dunks  
-            **Mid_FG%** — Midrange FG%  
-            **TwoPt_FG%** — Combined 2P FG%  
-            **Three_FG%** — 3P FG%
-            """
-        )
-
-    with col2:
-        st.markdown(
-            """
-            **📊 Shot Frequency**  
-            **Rim_Freq** — % of shots at rim  
-            **Mid_Freq** — % of shots midrange  
-            **Three_Freq** — % of shots from 3PT  
-            **TwoPt_Freq** — % of shots inside arc
-            """
-        )
-
-    with col3:
-        st.markdown(
-            """
-            **🤝 Assisted %**  
-            **NonDunk_Assisted%** — Non-dunk rim assists  
-            **Total_Assisted_Rim%** — Total rim assists  
-            **Mid_Assisted%** — Midrange assists  
-            **TwoPt_Assisted%** — 2P assists  
-            **Three_Assisted%** — 3P assists  
-            **Total_Assisted%** — Overall assists  
-            
-            **🏀 Dunk Metrics**  
-            **Dunk_Freq** — % of shots that are dunks  
-            **Dunk_FG%** — Dunk field goal %
-            """
-        )
-
     # Sidebar filters
-        # === SIDEBAR FILTERS ===
+    # === SIDEBAR FILTERS ===
     st.sidebar.markdown("**Filters**")
 
     # Player type filter - only show all options if all_assisted data is available
@@ -412,7 +361,7 @@ with tab1:
 
     # Zone-specific volume filters (collapsed by default)
     with st.sidebar.expander("Zone-Specific Volume Filters"):
-        min_rim = st.sidebar.number_input(
+        min_rim = st.number_input(
             "Minimum Rim Attempts",
             min_value=0,
             max_value=3000,
@@ -421,7 +370,7 @@ with tab1:
             help="Filter by minimum rim attempts",
             key="min_rim_filter"
         )
-        min_mid = st.sidebar.number_input(
+        min_mid = st.number_input(
             "Minimum Mid Attempts",
             min_value=0,
             max_value=2000,
@@ -430,7 +379,7 @@ with tab1:
             help="Filter by minimum midrange attempts",
             key="min_mid_filter"
         )
-        min_three = st.sidebar.number_input(
+        min_three = st.number_input(
             "Minimum Three Attempts",
             min_value=0,
             max_value=2000,
@@ -560,9 +509,9 @@ with tab1:
     years_with_unknown = years + ["Unknown"] if has_unknown_years else years
 
     selected_roles = st.sidebar.multiselect(
-        "Role", roles_with_unknown, default=roles_with_unknown)
+        "Role", roles_with_unknown, default=roles_with_unknown, key=f"roles_{player_type}")
     selected_years = st.sidebar.multiselect(
-        "Year", years_with_unknown, default=years_with_unknown)
+        "Year", years_with_unknown, default=years_with_unknown, key=f"years_{player_type}")
     search_txt = st.sidebar.text_input(
         "Search Player", placeholder="Type player name...")
 
@@ -802,6 +751,58 @@ with tab1:
         # Adjust height based on number of rows for better performance
         table_height = min(600, max(300, len(filt) * 35 + 100))
         st.dataframe(styled_df, height=table_height, use_container_width=True)
+
+        # Column descriptions below the table
+        st.markdown("---")
+        st.markdown("**Column Descriptions**")
+
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+            st.markdown(
+                """
+                **📈 Volume**  
+                **Total_Att** — Total career shot attempts  
+                **RimAtt** — Rim attempts  
+                **Mid_Att** — Midrange attempts  
+                **Three_Att** — Three-point attempts
+                
+                **🎯 Field Goal %**  
+                **NonDunk_Rim%** — FG% at rim excluding dunks  
+                **Total_Rim%** — FG% at rim including dunks  
+                **Mid_FG%** — Midrange FG%  
+                **TwoPt_FG%** — Combined 2P FG%  
+                **Three_FG%** — 3P FG%
+                """
+            )
+
+        with col2:
+            st.markdown(
+                """
+                **📊 Shot Frequency**  
+                **Rim_Freq** — % of shots at rim  
+                **Mid_Freq** — % of shots midrange  
+                **Three_Freq** — % of shots from 3PT  
+                **TwoPt_Freq** — % of shots inside arc
+                """
+            )
+
+        with col3:
+            st.markdown(
+                """
+                **🤝 Assisted %**  
+                **NonDunk_Assisted%** — Non-dunk rim assists  
+                **Total_Assisted_Rim%** — Total rim assists  
+                **Mid_Assisted%** — Midrange assists  
+                **TwoPt_Assisted%** — 2P assists  
+                **Three_Assisted%** — 3P assists  
+                **Total_Assisted%** — Overall assists  
+                
+                **🏀 Dunk Metrics**  
+                **Dunk_Freq** — % of shots that are dunks  
+                **Dunk_FG%** — Dunk field goal %
+                """
+            )
     else:
         st.info("No players match your current filters. Try adjusting the criteria.")
 
