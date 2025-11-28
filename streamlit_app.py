@@ -301,6 +301,9 @@ with tab1:
 
     # Clear filters button
     if st.sidebar.button("🔄 Clear All Filters", use_container_width=True, help="Reset all filters to default values"):
+        # Clear all session state keys
+        for key in list(st.session_state.keys()):
+            del st.session_state[key]
         st.rerun()
 
     # Player type filter - only show all options if all_assisted data is available
