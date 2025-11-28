@@ -732,22 +732,13 @@ with tab1:
 # ============================================================
 with tab2:
     from pages._Player_Compare import player_compare_app
-    # Pass the combined df (NBA + 2026 current players) and separate datasets
-    # Only pass df_nba and df_2026 if df_2026_current is not None
-    if df_2026_current is not None:
-        player_compare_app(
-            df_merged=df_combined,
-            df_career=df_career,
-            df_bart=df_bart,
-            df_nba=df,
-            df_2026=df_2026_current
-        )
-    else:
-        player_compare_app(
-            df_merged=df_combined,
-            df_career=df_career,
-            df_bart=df_bart
-        )  # ============================================================
+    # Pass the combined df (NBA + 2026 current players)
+    # Don't pass optional parameters to avoid Streamlit Cloud issues
+    player_compare_app(
+        df_merged=df_combined,
+        df_career=df_career,
+        df_bart=df_bart
+    )  # ============================================================
 # TAB 3 — PLAYER SIMILARITY & RADAR CHARTS
 # ============================================================
 with tab3:
