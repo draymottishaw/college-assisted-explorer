@@ -17,9 +17,19 @@ if str(ROOT) not in sys.path:
 
 def player_compare_app(df_merged: pd.DataFrame,
                        df_career: pd.DataFrame,
-                       df_bart: pd.DataFrame) -> None:
+                       df_bart: pd.DataFrame,
+                       df_nba: pd.DataFrame = None,
+                       df_2026: pd.DataFrame = None) -> None:
     # Use the pre-computed and merged dataset directly since it already has all metrics and role/year data
     df = df_merged.copy()
+
+    # Separate NBA and 2026 players for dropdown filtering
+    if df_nba is not None and df_2026 is not None:
+        nba_players = set(df_nba["Player"].dropna().unique())
+        current_2026_players = set(df_2026["Player"].dropna().unique())
+    else:
+        nba_players = set(df["Player"].dropna().unique())
+        current_2026_players = set()
 
     # ========================================================
     # SINGLE PLAYER SECTION
@@ -138,13 +148,24 @@ def player_compare_app(df_merged: pd.DataFrame,
 
     col1, col2 = st.columns(2)
     with col1:
+        # Player A can be anyone (NBA or 2026)
         player_a = st.selectbox(
             "Select Player A", sorted(df["Player"].dropna().unique()), key="player_a"
         )
     with col2:
-        player_b = st.selectbox(
-            "Select Player B", sorted(df["Player"].dropna().unique()), key="player_b"
-        )
+        # Player B - if Player A is 2026, only show NBA players; otherwise show all
+        if player_a and player_a in current_2026_players:
+            # 2026 player selected, only show NBA players for comparison
+            player_b_options = sorted(
+                [p for p in nba_players if p in df["Player"].values])
+            player_b = st.selectbox(
+                "Select Player B (NBA Players Only)", player_b_options, key="player_b"
+            )
+        else:
+            # NBA player or no selection, show all players
+            player_b = st.selectbox(
+                "Select Player B", sorted(df["Player"].dropna().unique()), key="player_b"
+            )
 
     if not player_a or not player_b:
         return

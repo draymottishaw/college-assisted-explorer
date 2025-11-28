@@ -731,8 +731,8 @@ with tab1:
 # ============================================================
 with tab2:
     from pages._Player_Compare import player_compare_app
-    # Pass the combined df (NBA + 2026 current players)
-    player_compare_app(df_combined, df_career, df_bart)
+    # Pass the combined df (NBA + 2026 current players) and separate datasets
+    player_compare_app(df_combined, df_career, df_bart, df, df_2026_current)
 
 # ============================================================
 # TAB 3 — PLAYER SIMILARITY & RADAR CHARTS
@@ -758,7 +758,8 @@ with tab3:
     ]
 
     # Filter players with complete data for similarity analysis (includes 2026 current players)
-    df_similarity = df_combined[similarity_metrics + ['Player', 'Role_final']].dropna()
+    df_similarity = df_combined[similarity_metrics +
+                                ['Player', 'Role_final']].dropna()
 
     # Player search
     search_player = st.selectbox(
@@ -769,6 +770,17 @@ with tab3:
     )
 
     if search_player:
+        # Check if selected player is from 2026
+        is_2026_player = df_2026_current is not None and search_player in df_2026_current[
+            'Player'].values
+
+        # If 2026 player, only compare against NBA players
+        if is_2026_player:
+            df_comparison = df_similarity[df_similarity['Player'].isin(
+                df['Player'])]
+        else:
+            df_comparison = df_similarity
+
         # Calculate similarity
         player_data = df_similarity[df_similarity['Player']
                                     == search_player][similarity_metrics].values
@@ -777,7 +789,7 @@ with tab3:
             # Normalize the data
             scaler = StandardScaler()
             normalized_data = scaler.fit_transform(
-                df_similarity[similarity_metrics])
+                df_comparison[similarity_metrics])
             player_normalized = scaler.transform(player_data)
 
             # Calculate cosine similarity
@@ -785,7 +797,7 @@ with tab3:
                 player_normalized, normalized_data)[0]
 
             # Create similarity dataframe
-            similarity_df = df_similarity.copy()
+            similarity_df = df_comparison.copy()
             similarity_df['Similarity'] = similarities
             similarity_df = similarity_df.sort_values(
                 'Similarity', ascending=False)
@@ -794,8 +806,9 @@ with tab3:
             similarity_df = similarity_df[similarity_df['Player']
                                           != search_player]
 
+            comparison_text = " (vs NBA Players)" if is_2026_player else ""
             st.markdown(
-                f"### 🎯 Shot Diet & FG% Similarity to **{search_player}**:")
+                f"### 🎯 Shot Diet & FG% Similarity to **{search_player}**{comparison_text}:")
 
             # Show top 28 similar players in 4 columns (7 rows each)
             top_similar = similarity_df.head(28)
