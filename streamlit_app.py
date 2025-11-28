@@ -299,6 +299,10 @@ with tab1:
     # === SIDEBAR FILTERS ===
     st.sidebar.markdown("**Filters**")
 
+    # Clear filters button
+    if st.sidebar.button("🔄 Clear All Filters", use_container_width=True, help="Reset all filters to default values"):
+        st.rerun()
+
     # Player type filter - only show all options if all_assisted data is available
     if df_all_computed is not None:
         player_type_options = ["NBA Players Only", "2026 Current Players",
