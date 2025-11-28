@@ -771,8 +771,9 @@ with tab3:
 
     if search_player:
         # Check if selected player is from 2026
-        is_2026_player = df_2026_current is not None and search_player in df_2026_current[
-            'Player'].values
+        is_2026_player = (df_2026_current is not None and
+                          len(df_2026_current) > 0 and
+                          search_player in df_2026_current['Player'].values)
 
         # If 2026 player, only compare against NBA players
         if is_2026_player:
