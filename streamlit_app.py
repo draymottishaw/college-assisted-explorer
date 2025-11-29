@@ -922,14 +922,14 @@ with tab3:
         'Total_Assisted%', 'Mid_Assisted%', 'Three_Assisted%', 'TwoPt_Assisted%', 'NonDunk_Assisted%',
         'Three_FG%', 'Total_Rim%'
     ]
-    
+
     # Full metrics including Height (for 2026 players)
     unique_metrics = core_metrics + ['Height']
 
     # Filter players with complete data for similarity analysis (only require core metrics, Height optional)
     df_similarity = df_combined[core_metrics +
                                 ['Player', 'Role_final']].dropna()
-    
+
     # Add Height column if it exists (will be NaN for NBA players)
     if 'Height' in df_combined.columns:
         df_similarity['Height'] = df_combined.loc[df_similarity.index, 'Height']
