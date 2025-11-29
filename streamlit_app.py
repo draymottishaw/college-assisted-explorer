@@ -915,18 +915,24 @@ with tab3:
     st.markdown(
         "Find players with similar **shot diets** (where they get their shots), volume, height, and playing styles. Similarity includes shot location frequencies, volume, height, shooting efficiency, and shot creation style.")
 
-    # Unique metrics for dataframe selection
-    unique_metrics = [
+    # Core metrics that all players should have (excluding Height)
+    core_metrics = [
         'Rim_Freq', 'Mid_Freq', 'Three_Freq', 'TwoPt_Freq',
         'RimAtt', 'Mid_Att', 'Three_Att',
         'Total_Assisted%', 'Mid_Assisted%', 'Three_Assisted%', 'TwoPt_Assisted%', 'NonDunk_Assisted%',
-        'Three_FG%', 'Total_Rim%',
-        'Height'
+        'Three_FG%', 'Total_Rim%'
     ]
+    
+    # Full metrics including Height (for 2026 players)
+    unique_metrics = core_metrics + ['Height']
 
-    # Filter players with complete data for similarity analysis (includes 2026 current players)
-    df_similarity = df_combined[unique_metrics +
+    # Filter players with complete data for similarity analysis (only require core metrics, Height optional)
+    df_similarity = df_combined[core_metrics +
                                 ['Player', 'Role_final']].dropna()
+    
+    # Add Height column if it exists (will be NaN for NBA players)
+    if 'Height' in df_combined.columns:
+        df_similarity['Height'] = df_combined.loc[df_similarity.index, 'Height']
 
     # Player search
     search_player = st.selectbox(
