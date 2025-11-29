@@ -956,110 +956,133 @@ with tab3:
         if len(player_data) > 0:
             # Get data and apply weights by duplicating columns
             comparison_data = df_comparison[unique_metrics].values
-            
+
             # Replace any NaN or inf values with 0
-            comparison_data = np.nan_to_num(comparison_data, nan=0.0, posinf=0.0, neginf=0.0)
-            player_data = np.nan_to_num(player_data, nan=0.0, posinf=0.0, neginf=0.0)
+            comparison_data = np.nan_to_num(
+                comparison_data, nan=0.0, posinf=0.0, neginf=0.0)
+            player_data = np.nan_to_num(
+                player_data, nan=0.0, posinf=0.0, neginf=0.0)
 
-            # Create weighted data by duplicating volume and height columns
-            # Indices: 4,5,6 are RimAtt, Mid_Att, Three_Att; 14 is Height
-            try:
-                weighted_comparison = np.column_stack([
-                    comparison_data,  # All original columns (15)
-                    comparison_data[:, 4],  # RimAtt duplicate
-                    comparison_data[:, 5],  # Mid_Att duplicate
-                    comparison_data[:, 6],  # Three_Att duplicate
-                    comparison_data[:, 14]  # Height duplicate
-                ])
+            # Check if we have valid data
+            if comparison_data.shape[0] == 0 or comparison_data.shape[1] == 0:
+                st.error("No valid comparison data available.")
+            else:
+                # Create weighted data by duplicating volume and height columns
+                # Indices: 4,5,6 are RimAtt, Mid_Att, Three_Att; 14 is Height
+                try:
+                    # Check if we have enough columns (need at least 15 for height)
+                    if comparison_data.shape[1] >= 15:
+                        weighted_comparison = np.column_stack([
+                            comparison_data,  # All original columns (15)
+                            comparison_data[:, 4],  # RimAtt duplicate
+                            comparison_data[:, 5],  # Mid_Att duplicate
+                            comparison_data[:, 6],  # Three_Att duplicate
+                            comparison_data[:, 14]  # Height duplicate
+                        ])
 
-                weighted_player = np.column_stack([
-                    player_data,
-                    player_data[:, 4],
-                    player_data[:, 5],
-                    player_data[:, 6],
-                    player_data[:, 14]
-                ])
-            except IndexError:
-                # Fallback if Height column doesn't exist
-                weighted_comparison = np.column_stack([
-                    comparison_data,
-                    comparison_data[:, 4],
-                    comparison_data[:, 5],
-                    comparison_data[:, 6]
-                ])
+                        weighted_player = np.column_stack([
+                            player_data,
+                            player_data[:, 4],
+                            player_data[:, 5],
+                            player_data[:, 6],
+                            player_data[:, 14]
+                        ])
+                    else:
+                        # No height column, just duplicate volume
+                        weighted_comparison = np.column_stack([
+                            comparison_data,
+                            comparison_data[:, 4],
+                            comparison_data[:, 5],
+                            comparison_data[:, 6]
+                        ])
 
-                weighted_player = np.column_stack([
-                    player_data,
-                    player_data[:, 4],
-                    player_data[:, 5],
-                    player_data[:, 6]
-                ])
+                        weighted_player = np.column_stack([
+                            player_data,
+                            player_data[:, 4],
+                            player_data[:, 5],
+                            player_data[:, 6]
+                        ])
 
-            # Normalize the weighted data
-            scaler = StandardScaler()
-            normalized_data = scaler.fit_transform(weighted_comparison)
-            player_normalized = scaler.transform(weighted_player)
+                    # Check for constant columns and remove them
+                    col_std = np.std(weighted_comparison, axis=0)
+                    non_constant_cols = col_std > 1e-10
 
-            # Calculate cosine similarity
-            similarities = cosine_similarity(
-                player_normalized, normalized_data)[0]
+                    if non_constant_cols.sum() == 0:
+                        st.error(
+                            "All features have zero variance. Cannot compute similarity.")
+                    else:
+                        weighted_comparison = weighted_comparison[:,
+                                                                  non_constant_cols]
+                        weighted_player = weighted_player[:, non_constant_cols]
 
-            # Create similarity dataframe
-            similarity_df = df_comparison.copy()
-            similarity_df['Similarity'] = similarities
-            similarity_df = similarity_df.sort_values(
-                'Similarity', ascending=False)
+                        # Normalize the weighted data
+                        scaler = StandardScaler()
+                        normalized_data = scaler.fit_transform(
+                            weighted_comparison)
+                        player_normalized = scaler.transform(weighted_player)
 
-            # Remove the selected player from results
-            similarity_df = similarity_df[similarity_df['Player']
-                                          != search_player]
+                        # Calculate cosine similarity
+                        similarities = cosine_similarity(
+                            player_normalized, normalized_data)[0]
 
-            comparison_text = " (vs NBA Players)" if is_2026_player else ""
-            st.markdown(
-                f"### 🎯 Shot Diet & FG% Similarity to **{search_player}**{comparison_text}:")
+                        # Create similarity dataframe
+                        similarity_df = df_comparison.copy()
+                        similarity_df['Similarity'] = similarities
+                        similarity_df = similarity_df.sort_values(
+                            'Similarity', ascending=False)
 
-            # Show top 28 similar players in 4 columns (7 rows each)
-            top_similar = similarity_df.head(28)
+                        # Remove the selected player from results
+                        similarity_df = similarity_df[similarity_df['Player']
+                                                      != search_player]
 
-            col1, col2, col3, col4 = st.columns(4)
-            columns = [col1, col2, col3, col4]
+                        comparison_text = " (vs NBA Players)" if is_2026_player else ""
+                        st.markdown(
+                            f"### 🎯 Shot Diet & FG% Similarity to **{search_player}**{comparison_text}:")
 
-            for idx, (i, row) in enumerate(top_similar.iterrows()):
-                similarity_score = row['Similarity'] * 100
-                role = row['Role_final'] if pd.notna(
-                    row['Role_final']) else 'Unknown'
+                        # Show top 28 similar players in 4 columns (7 rows each)
+                        top_similar = similarity_df.head(28)
 
-                # Create gradient color based on similarity rank
-                # High similarity = green, lower similarity = red
-                if idx < 7:  # Top 7 - green shades
-                    color_intensity = 1.0 - (idx / 7) * 0.4  # 1.0 to 0.6
-                    color = f"rgba(76, 194, 69, {color_intensity})"
-                elif idx < 14:  # Next 7 - yellow/orange shades
-                    color_intensity = 0.8 - ((idx - 7) / 7) * 0.3  # 0.8 to 0.5
-                    color = f"rgba(255, 193, 7, {color_intensity})"
-                elif idx < 21:  # Next 7 - orange shades
-                    color_intensity = 0.7 - \
-                        ((idx - 14) / 7) * 0.2  # 0.7 to 0.5
-                    color = f"rgba(255, 152, 0, {color_intensity})"
-                else:  # Last 7 - red shades
-                    color_intensity = 0.6 - \
-                        ((idx - 21) / 7) * 0.2  # 0.6 to 0.4
-                    color = f"rgba(244, 67, 54, {color_intensity})"
+                        col1, col2, col3, col4 = st.columns(4)
+                        columns = [col1, col2, col3, col4]
 
-                # Distribute across 4 columns
-                target_col = columns[idx % 4]
-                with target_col:
-                    st.markdown(
-                        f"""
-                        <div style="background-color: {color}; padding: 8px; border-radius: 5px; margin-bottom: 5px; border: 1px solid rgba(255,255,255,0.1);">
-                            <strong>{row['Player']}</strong> ({role})<br>
-                            <span style="color: #E8E8E8; font-size: 0.9em;">{similarity_score:.1f}% similar</span>
-                        </div>
-                        """,
-                        unsafe_allow_html=True
-                    )
+                        for idx, (i, row) in enumerate(top_similar.iterrows()):
+                            similarity_score = row['Similarity'] * 100
+                            role = row['Role_final'] if pd.notna(
+                                row['Role_final']) else 'Unknown'
 
-            st.markdown("---")
+                            # Create gradient color based on similarity rank
+                            # High similarity = green, lower similarity = red
+                            if idx < 7:  # Top 7 - green shades
+                                color_intensity = 1.0 - \
+                                    (idx / 7) * 0.4  # 1.0 to 0.6
+                                color = f"rgba(76, 194, 69, {color_intensity})"
+                            elif idx < 14:  # Next 7 - yellow/orange shades
+                                color_intensity = 0.8 - \
+                                    ((idx - 7) / 7) * 0.3  # 0.8 to 0.5
+                                color = f"rgba(255, 193, 7, {color_intensity})"
+                            elif idx < 21:  # Next 7 - orange shades
+                                color_intensity = 0.7 - \
+                                    ((idx - 14) / 7) * 0.2  # 0.7 to 0.5
+                                color = f"rgba(255, 152, 0, {color_intensity})"
+                            else:  # Last 7 - red shades
+                                color_intensity = 0.6 - \
+                                    ((idx - 21) / 7) * 0.2  # 0.6 to 0.4
+                                color = f"rgba(244, 67, 54, {color_intensity})"
+
+                            # Distribute across 4 columns
+                            target_col = columns[idx % 4]
+                            with target_col:
+                                st.markdown(
+                                    f"""
+                                    <div style="background-color: {color}; padding: 8px; border-radius: 5px; margin-bottom: 5px; border: 1px solid rgba(255,255,255,0.1);">
+                                        <strong>{row['Player']}</strong> ({role})<br>
+                                        <span style="color: #E8E8E8; font-size: 0.9em;">{similarity_score:.1f}% similar</span>
+                                    </div>
+                                    """,
+                                    unsafe_allow_html=True
+                                )
+
+                        st.markdown("---")
 
     # Universal player comparison selector (outside the similarity section)
     st.markdown("### 🎯 Compare Any Two Players")
