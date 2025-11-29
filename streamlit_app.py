@@ -1084,6 +1084,9 @@ with tab3:
 
                         st.markdown("---")
 
+                except Exception as e:
+                    st.error(f"Error calculating similarity: {str(e)}")
+
     # Universal player comparison selector (outside the similarity section)
     st.markdown("### 🎯 Compare Any Two Players")
 
