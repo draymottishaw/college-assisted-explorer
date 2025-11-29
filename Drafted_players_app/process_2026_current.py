@@ -13,6 +13,10 @@ def process_2026_current_players():
 
     print(f"2026 Stats players: {len(stats_2026)}")
 
+    # Create set of players to include (only those in 2026_stats.csv)
+    players_to_include = set(stats_2026['player_lower'])
+    print(f"Players to include: {len(players_to_include)}")
+
     # Load 2026 JSON
     json_file = "temp_data/2026_pbp_playerstat_array.json"
     with open(json_file, 'r') as f:
@@ -24,6 +28,11 @@ def process_2026_current_players():
     for player_row in year_data:
         if len(player_row) >= 15:
             player_id, player_name, team = player_row[0], player_row[1], player_row[2]
+            player_lower = player_name.lower().strip()
+
+            # Only include players that are in 2026_stats.csv
+            if player_lower not in players_to_include:
+                continue
             rim_made, rim_miss, rim_ast = player_row[3], player_row[4], player_row[5]
             mid_made, mid_miss, mid_ast = player_row[6], player_row[7], player_row[8]
             three_made, three_miss, three_ast = player_row[9], player_row[10], player_row[11]
@@ -51,9 +60,21 @@ def process_2026_current_players():
 
     print(f"Total 2026 players: {len(df_2026)}")
 
-    # Merge with stats to get Role and YR
+    # Group by player_lower and sum stats for transfers/duplicate names
+    stat_cols_to_sum = ['RimMade', 'RimMiss', 'RimAst', 'MidMade', 'MidMiss', 'MidAst',
+                        'ThreeMade', 'ThreeMiss', 'ThreeAst', 'DunkMade', 'DunkMiss', 'DunkAst']
+
+    # Aggregate: sum stats, keep first Player/Team
+    agg_dict = {col: 'sum' for col in stat_cols_to_sum}
+    agg_dict['Player'] = 'first'
+    agg_dict['Team'] = 'first'
+
+    df_2026 = df_2026.groupby('player_lower', as_index=False).agg(agg_dict)
+    print(f"After deduplication: {len(df_2026)} unique players")
+
+    # Merge with stats to get Role and YR (inner join to only keep exact matches)
     df_2026 = df_2026.merge(stats_2026[['player_lower', 'Role', 'YR']],
-                            on='player_lower', how='left')
+                            on='player_lower', how='inner')
 
     # Convert to numeric
     stat_cols = ['RimMade', 'RimMiss', 'RimAst', 'MidMade', 'MidMiss', 'MidAst',
