@@ -956,21 +956,44 @@ with tab3:
         if len(player_data) > 0:
             # Get data and apply weights by duplicating columns
             comparison_data = df_comparison[unique_metrics].values
+            
+            # Replace any NaN or inf values with 0
+            comparison_data = np.nan_to_num(comparison_data, nan=0.0, posinf=0.0, neginf=0.0)
+            player_data = np.nan_to_num(player_data, nan=0.0, posinf=0.0, neginf=0.0)
 
             # Create weighted data by duplicating volume and height columns
             # Indices: 4,5,6 are RimAtt, Mid_Att, Three_Att; 14 is Height
-            weighted_comparison = np.column_stack([
-                comparison_data,  # All original columns
-                # Duplicate volume columns (RimAtt, Mid_Att, Three_Att)
-                comparison_data[:, 4:7],
-                comparison_data[:, 14:15]  # Duplicate height column
-            ])
+            try:
+                weighted_comparison = np.column_stack([
+                    comparison_data,  # All original columns (15)
+                    comparison_data[:, 4],  # RimAtt duplicate
+                    comparison_data[:, 5],  # Mid_Att duplicate
+                    comparison_data[:, 6],  # Three_Att duplicate
+                    comparison_data[:, 14]  # Height duplicate
+                ])
 
-            weighted_player = np.column_stack([
-                player_data,
-                player_data[:, 4:7],
-                player_data[:, 14:15]
-            ])
+                weighted_player = np.column_stack([
+                    player_data,
+                    player_data[:, 4],
+                    player_data[:, 5],
+                    player_data[:, 6],
+                    player_data[:, 14]
+                ])
+            except IndexError:
+                # Fallback if Height column doesn't exist
+                weighted_comparison = np.column_stack([
+                    comparison_data,
+                    comparison_data[:, 4],
+                    comparison_data[:, 5],
+                    comparison_data[:, 6]
+                ])
+
+                weighted_player = np.column_stack([
+                    player_data,
+                    player_data[:, 4],
+                    player_data[:, 5],
+                    player_data[:, 6]
+                ])
 
             # Normalize the weighted data
             scaler = StandardScaler()
