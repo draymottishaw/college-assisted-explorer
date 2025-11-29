@@ -942,20 +942,26 @@ with tab3:
                           len(df_2026_current) > 0 and
                           search_player in df_2026_current['Player'].values)
 
-        # If 2026 player, only compare against NBA players
+        # If 2026 player, only compare against NBA players (who don't have Height)
         if is_2026_player:
+            # Use metrics without Height for NBA comparison
+            comparison_metrics = [m for m in unique_metrics if m != 'Height']
             df_comparison = df_similarity[df_similarity['Player'].isin(
                 df['Player'])]
+            # Filter to only include players with all required metrics
+            df_comparison = df_comparison[comparison_metrics +
+                                          ['Player', 'Role_final']].dropna()
         else:
+            comparison_metrics = unique_metrics
             df_comparison = df_similarity
 
         # Calculate similarity with boosted weights for volume and height
         player_data = df_similarity[df_similarity['Player']
-                                    == search_player][unique_metrics].values
+                                    == search_player][comparison_metrics].values
 
         if len(player_data) > 0:
             # Get data and apply weights by duplicating columns
-            comparison_data = df_comparison[unique_metrics].values
+            comparison_data = df_comparison[comparison_metrics].values
 
             # Replace any NaN or inf values with 0
             comparison_data = np.nan_to_num(
@@ -968,39 +974,46 @@ with tab3:
                 st.error("No valid comparison data available.")
             else:
                 # Create weighted data by duplicating volume and height columns
-                # Indices: 4,5,6 are RimAtt, Mid_Att, Three_Att; 14 is Height
+                # Find indices for volume metrics
                 try:
-                    # Check if we have enough columns (need at least 15 for height)
-                    if comparison_data.shape[1] >= 15:
+                    rimatt_idx = comparison_metrics.index('RimAtt')
+                    midatt_idx = comparison_metrics.index('Mid_Att')
+                    threeatt_idx = comparison_metrics.index('Three_Att')
+
+                    # Check if Height is in comparison metrics
+                    if 'Height' in comparison_metrics:
+                        height_idx = comparison_metrics.index('Height')
                         weighted_comparison = np.column_stack([
-                            comparison_data,  # All original columns (15)
-                            comparison_data[:, 4],  # RimAtt duplicate
-                            comparison_data[:, 5],  # Mid_Att duplicate
-                            comparison_data[:, 6],  # Three_Att duplicate
-                            comparison_data[:, 14]  # Height duplicate
+                            comparison_data,  # All original columns
+                            comparison_data[:, rimatt_idx],  # RimAtt duplicate
+                            # Mid_Att duplicate
+                            comparison_data[:, midatt_idx],
+                            # Three_Att duplicate
+                            comparison_data[:, threeatt_idx],
+                            comparison_data[:, height_idx]  # Height duplicate
                         ])
 
                         weighted_player = np.column_stack([
                             player_data,
-                            player_data[:, 4],
-                            player_data[:, 5],
-                            player_data[:, 6],
-                            player_data[:, 14]
+                            player_data[:, rimatt_idx],
+                            player_data[:, midatt_idx],
+                            player_data[:, threeatt_idx],
+                            player_data[:, height_idx]
                         ])
                     else:
                         # No height column, just duplicate volume
                         weighted_comparison = np.column_stack([
                             comparison_data,
-                            comparison_data[:, 4],
-                            comparison_data[:, 5],
-                            comparison_data[:, 6]
+                            comparison_data[:, rimatt_idx],
+                            comparison_data[:, midatt_idx],
+                            comparison_data[:, threeatt_idx]
                         ])
 
                         weighted_player = np.column_stack([
                             player_data,
-                            player_data[:, 4],
-                            player_data[:, 5],
-                            player_data[:, 6]
+                            player_data[:, rimatt_idx],
+                            player_data[:, midatt_idx],
+                            player_data[:, threeatt_idx]
                         ])
 
                     # Check for constant columns and remove them
