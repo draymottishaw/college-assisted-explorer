@@ -11,19 +11,28 @@ def process_2026_current_players():
     stats_2026 = pd.read_csv("temp_data/2026_stats.csv")
     stats_2026['player_lower'] = stats_2026['Player'].str.lower().str.strip()
 
-    print(f"2026 Stats players: {len(stats_2026)}")
+    # Create set of players to include (only those in 2026_stats.csv)
+    players_to_include = set(stats_2026['player_lower'])
+
+    print(f"2026 Stats players to include: {len(stats_2026)}")
 
     # Load 2026 JSON
     json_file = "temp_data/2026_pbp_playerstat_array.json"
     with open(json_file, 'r') as f:
         year_data = json.load(f)
 
-    print(f"Processing 2026 JSON: {len(year_data)} players")
+    print(f"Processing 2026 JSON: {len(year_data)} total players")
 
     all_player_data = []
     for player_row in year_data:
         if len(player_row) >= 15:
             player_id, player_name, team = player_row[0], player_row[1], player_row[2]
+            player_lower = player_name.lower().strip()
+
+            # Only include players who are in 2026_stats.csv
+            if player_lower not in players_to_include:
+                continue
+
             rim_made, rim_miss, rim_ast = player_row[3], player_row[4], player_row[5]
             mid_made, mid_miss, mid_ast = player_row[6], player_row[7], player_row[8]
             three_made, three_miss, three_ast = player_row[9], player_row[10], player_row[11]
@@ -49,7 +58,7 @@ def process_2026_current_players():
     df_2026 = pd.DataFrame(all_player_data)
     df_2026['player_lower'] = df_2026['Player'].str.lower().str.strip()
 
-    print(f"Total 2026 players: {len(df_2026)}")
+    print(f"Filtered 2026 players (in 2026_stats.csv): {len(df_2026)}")
 
     # Merge with stats to get Role and YR
     df_2026 = df_2026.merge(stats_2026[['player_lower', 'Role', 'YR']],
