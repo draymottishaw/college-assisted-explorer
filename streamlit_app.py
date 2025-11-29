@@ -913,15 +913,19 @@ with tab3:
 
     st.markdown("### Player Similarity & Radar Charts")
     st.markdown(
-        "Find players with similar **shot diets** (where they get their shots) and playing styles. Similarity is based primarily on shot location frequencies, with shooting efficiency and shot creation style as secondary factors.")
+        "Find players with similar **shot diets** (where they get their shots), volume, height, and playing styles. Similarity includes shot location frequencies, volume, height, shooting efficiency, and shot creation style.")
 
-    # Create metrics for similarity analysis - emphasizing shot diet & shot creation
+    # Create metrics for similarity analysis - with boosted weight for volume and height
     similarity_metrics = [
-        # Shot Diet (Frequencies) - 36% weight (4/11)
+        # Shot Diet (Frequencies)
         'Rim_Freq', 'Mid_Freq', 'Three_Freq', 'TwoPt_Freq',
-        # Shot Creation (Assisted %) - 45% weight (5/11)
+        # Volume (Attempts per zone) - weighted 2x by including twice
+        'RimAtt', 'RimAtt', 'Mid_Att', 'Mid_Att', 'Three_Att', 'Three_Att',
+        # Height - weighted 2x by including twice
+        'Height', 'Height',
+        # Shot Creation (Assisted %)
         'Total_Assisted%', 'Mid_Assisted%', 'Three_Assisted%', 'TwoPt_Assisted%', 'NonDunk_Assisted%',
-        # Shooting Efficiency (minimal) - 18% weight (2/11)
+        # Shooting Efficiency
         'Three_FG%', 'Total_Rim%'
     ]
 
@@ -1057,20 +1061,26 @@ with tab3:
             player2_data = df_similarity[df_similarity['Player']
                                          == player2].iloc[0]
 
-            # Create radar chart for both players using same metrics as similarity
-            metrics = similarity_metrics
+            # Create unique metrics list for radar chart (no duplicates)
+            unique_metrics = [
+                'Rim_Freq', 'Mid_Freq', 'Three_Freq', 'TwoPt_Freq',
+                'RimAtt', 'Mid_Att', 'Three_Att',
+                'Total_Assisted%', 'Mid_Assisted%', 'Three_Assisted%', 'TwoPt_Assisted%', 'NonDunk_Assisted%',
+                'Three_FG%', 'Total_Rim%',
+                'Height'
+            ]
 
             # Get raw values
-            values1_raw = [player1_data[metric] for metric in metrics]
-            values2_raw = [player2_data[metric] for metric in metrics]
+            values1_raw = [player1_data[metric] for metric in unique_metrics]
+            values2_raw = [player2_data[metric] for metric in unique_metrics]
 
             # Normalize values to 0-1 scale for radar chart display
             # Use min-max normalization for each metric across all players
             values1_normalized = []
             values2_normalized = []
 
-            for i, metric in enumerate(metrics):
-                metric_data = df_similarity[metric].dropna()
+            for i, metric in enumerate(unique_metrics):
+                metric_data = df_combined[metric].dropna()
                 min_val = metric_data.min()
                 max_val = metric_data.max()
 
@@ -1085,8 +1095,8 @@ with tab3:
                 values1_normalized.append(v1_norm)
                 values2_normalized.append(v2_norm)
 
-            angles = [n / float(len(metrics)) * 2 *
-                      np.pi for n in range(len(metrics))]
+            angles = [n / float(len(unique_metrics)) * 2 *
+                      np.pi for n in range(len(unique_metrics))]
             angles += angles[:1]
             values1_normalized += values1_normalized[:1]
             values2_normalized += values2_normalized[:1]
@@ -1139,7 +1149,7 @@ with tab3:
 
             # Create a comparison table with proper formatting
             comparison_data = []
-            for metric in metrics:
+            for metric in unique_metrics:
                 val1 = player1_data[metric]
                 val2 = player2_data[metric]
 
