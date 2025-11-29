@@ -915,22 +915,17 @@ with tab3:
     st.markdown(
         "Find players with similar **shot diets** (where they get their shots), volume, height, and playing styles. Similarity includes shot location frequencies, volume, height, shooting efficiency, and shot creation style.")
 
-    # Create metrics for similarity analysis - with boosted weight for volume and height
-    similarity_metrics = [
-        # Shot Diet (Frequencies)
+    # Unique metrics for dataframe selection
+    unique_metrics = [
         'Rim_Freq', 'Mid_Freq', 'Three_Freq', 'TwoPt_Freq',
-        # Volume (Attempts per zone) - weighted 2x by including twice
-        'RimAtt', 'RimAtt', 'Mid_Att', 'Mid_Att', 'Three_Att', 'Three_Att',
-        # Height - weighted 2x by including twice
-        'Height', 'Height',
-        # Shot Creation (Assisted %)
+        'RimAtt', 'Mid_Att', 'Three_Att',
         'Total_Assisted%', 'Mid_Assisted%', 'Three_Assisted%', 'TwoPt_Assisted%', 'NonDunk_Assisted%',
-        # Shooting Efficiency
-        'Three_FG%', 'Total_Rim%'
+        'Three_FG%', 'Total_Rim%',
+        'Height'
     ]
 
     # Filter players with complete data for similarity analysis (includes 2026 current players)
-    df_similarity = df_combined[similarity_metrics +
+    df_similarity = df_combined[unique_metrics +
                                 ['Player', 'Role_final']].dropna()
 
     # Player search
@@ -954,16 +949,33 @@ with tab3:
         else:
             df_comparison = df_similarity
 
-        # Calculate similarity
+        # Calculate similarity with boosted weights for volume and height
         player_data = df_similarity[df_similarity['Player']
-                                    == search_player][similarity_metrics].values
+                                    == search_player][unique_metrics].values
 
         if len(player_data) > 0:
-            # Normalize the data
+            # Get data and apply weights by duplicating columns
+            comparison_data = df_comparison[unique_metrics].values
+
+            # Create weighted data by duplicating volume and height columns
+            # Indices: 4,5,6 are RimAtt, Mid_Att, Three_Att; 14 is Height
+            weighted_comparison = np.column_stack([
+                comparison_data,  # All original columns
+                # Duplicate volume columns (RimAtt, Mid_Att, Three_Att)
+                comparison_data[:, 4:7],
+                comparison_data[:, 14:15]  # Duplicate height column
+            ])
+
+            weighted_player = np.column_stack([
+                player_data,
+                player_data[:, 4:7],
+                player_data[:, 14:15]
+            ])
+
+            # Normalize the weighted data
             scaler = StandardScaler()
-            normalized_data = scaler.fit_transform(
-                df_comparison[similarity_metrics])
-            player_normalized = scaler.transform(player_data)
+            normalized_data = scaler.fit_transform(weighted_comparison)
+            player_normalized = scaler.transform(weighted_player)
 
             # Calculate cosine similarity
             similarities = cosine_similarity(
