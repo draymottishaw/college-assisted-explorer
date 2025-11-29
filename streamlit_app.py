@@ -262,6 +262,23 @@ def load_data():
         df_2026_current["Role_final"] = df_2026_current["Role"]
         df_2026_current["Year_final"] = df_2026_current["YR"]
 
+        # Convert Height from "6-5" format to inches
+        if "Height" in df_2026_current.columns:
+            def height_to_inches(height_str):
+                try:
+                    if pd.isna(height_str) or height_str == '':
+                        return None
+                    parts = str(height_str).split('-')
+                    if len(parts) == 2:
+                        feet, inches = int(parts[0]), int(parts[1])
+                        return feet * 12 + inches
+                    return None
+                except:
+                    return None
+
+            df_2026_current['Height'] = df_2026_current['Height'].apply(
+                height_to_inches)
+
     return df, df_complete, df_nba_players, df_career, df_bart, df_all_computed, df_2026_current
 
 
@@ -1043,31 +1060,54 @@ with tab3:
             # Create radar chart for both players using same metrics as similarity
             metrics = similarity_metrics
 
-            values1 = [player1_data[metric] for metric in metrics]
-            values2 = [player2_data[metric] for metric in metrics]
+            # Get raw values
+            values1_raw = [player1_data[metric] for metric in metrics]
+            values2_raw = [player2_data[metric] for metric in metrics]
+
+            # Normalize values to 0-1 scale for radar chart display
+            # Use min-max normalization for each metric across all players
+            values1_normalized = []
+            values2_normalized = []
+
+            for i, metric in enumerate(metrics):
+                metric_data = df_similarity[metric].dropna()
+                min_val = metric_data.min()
+                max_val = metric_data.max()
+
+                # Avoid division by zero
+                if max_val - min_val > 0:
+                    v1_norm = (values1_raw[i] - min_val) / (max_val - min_val)
+                    v2_norm = (values2_raw[i] - min_val) / (max_val - min_val)
+                else:
+                    v1_norm = 0.5
+                    v2_norm = 0.5
+
+                values1_normalized.append(v1_norm)
+                values2_normalized.append(v2_norm)
 
             angles = [n / float(len(metrics)) * 2 *
                       np.pi for n in range(len(metrics))]
             angles += angles[:1]
-            values1 += values1[:1]
-            values2 += values2[:1]
+            values1_normalized += values1_normalized[:1]
+            values2_normalized += values2_normalized[:1]
 
             fig, ax = plt.subplots(
                 figsize=(7, 7), subplot_kw=dict(projection='polar'))
 
-            # Plot both players
-            ax.plot(angles, values1, 'o-', linewidth=2,
+            # Plot both players with normalized values
+            ax.plot(angles, values1_normalized, 'o-', linewidth=2,
                     label=player1, color='#FF6B6B', alpha=0.8)
-            ax.fill(angles, values1, alpha=0.25, color='#FF6B6B')
+            ax.fill(angles, values1_normalized, alpha=0.25, color='#FF6B6B')
 
-            ax.plot(angles, values2, 'o-', linewidth=2,
+            ax.plot(angles, values2_normalized, 'o-', linewidth=2,
                     label=player2, color='#4ECDC4', alpha=0.8)
-            ax.fill(angles, values2, alpha=0.25, color='#4ECDC4')
+            ax.fill(angles, values2_normalized, alpha=0.25, color='#4ECDC4')
 
             # Customize chart with transparent background and white text/lines
             metrics_labels = ['Rim Freq', 'Mid Freq', '3PT Freq', '2PT Freq',
+                              'Rim Vol', 'Mid Vol', '3PT Vol',
                               'Overall Assist%', 'Mid Assist%', '3PT Assist%', '2PT Assist%', 'NonDunk Assist%',
-                              '3PT FG%', 'Rim FG%']
+                              '3PT FG%', 'Rim FG%', 'Height']
 
             ax.set_xticks(angles[:-1])
             ax.set_xticklabels(metrics_labels, size=9,
@@ -1097,13 +1137,30 @@ with tab3:
         with col_metrics:
             st.markdown("#### 📈 Side-by-Side Metrics")
 
-            # Create a comparison table
+            # Create a comparison table with proper formatting
             comparison_data = []
             for metric in metrics:
+                val1 = player1_data[metric]
+                val2 = player2_data[metric]
+
+                # Format based on metric type
+                if metric in ['RimAtt', 'Mid_Att', 'Three_Att']:
+                    # Volume metrics - show as whole numbers
+                    formatted_val1 = f"{val1:.0f}"
+                    formatted_val2 = f"{val2:.0f}"
+                elif metric == 'Height':
+                    # Height in inches - show as whole number
+                    formatted_val1 = f"{val1:.0f}\""
+                    formatted_val2 = f"{val2:.0f}\""
+                else:
+                    # Percentages and frequencies
+                    formatted_val1 = f"{val1:.1%}"
+                    formatted_val2 = f"{val2:.1%}"
+
                 comparison_data.append({
                     'Metric': metric,
-                    player1: f"{player1_data[metric]:.1%}",
-                    player2: f"{player2_data[metric]:.1%}"
+                    player1: formatted_val1,
+                    player2: formatted_val2
                 })
 
             comparison_df = pd.DataFrame(comparison_data)

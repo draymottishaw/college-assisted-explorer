@@ -72,8 +72,8 @@ def process_2026_current_players():
     df_2026 = df_2026.groupby('player_lower', as_index=False).agg(agg_dict)
     print(f"After deduplication: {len(df_2026)} unique players")
 
-    # Merge with stats to get Role and YR (inner join to only keep exact matches)
-    df_2026 = df_2026.merge(stats_2026[['player_lower', 'Role', 'YR']],
+    # Merge with stats to get Role, YR, and Height (inner join to only keep exact matches)
+    df_2026 = df_2026.merge(stats_2026[['player_lower', 'Role', 'YR', 'Height']],
                             on='player_lower', how='inner')
 
     # Convert to numeric

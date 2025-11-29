@@ -464,16 +464,20 @@ with tab3:
 
     st.title("Player Similarity & Radar Charts")
     st.markdown(
-        "Find players with similar **shot diets** (where they get their shots) and playing styles. Similarity is based primarily on shot location frequencies, with shooting efficiency and shot creation style as secondary factors.")
+        "Find players with similar **shot diets** (where they get their shots), volume, height, and playing styles. Similarity includes shot location frequencies, volume, height, shooting efficiency, and shot creation style.")
 
-    # Create metrics for similarity analysis - emphasizing shot diet & shot creation
+    # Create metrics for similarity analysis - including height, volume, shot diet, efficiency, and creation
     similarity_metrics = [
-        # Shot Diet (Frequencies) - 36% weight (4/11)
+        # Shot Diet (Frequencies)
         'Rim_Freq', 'Mid_Freq', 'Three_Freq', 'TwoPt_Freq',
-        # Shot Creation (Assisted %) - 45% weight (5/11)
+        # Volume (Attempts per zone)
+        'RimAtt', 'Mid_Att', 'Three_Att',
+        # Shot Creation (Assisted %)
         'Total_Assisted%', 'Mid_Assisted%', 'Three_Assisted%', 'TwoPt_Assisted%', 'NonDunk_Assisted%',
-        # Shooting Efficiency (minimal) - 18% weight (2/11)
-        'Three_FG%', 'Total_Rim%'
+        # Shooting Efficiency
+        'Three_FG%', 'Total_Rim%',
+        # Height
+        'Height'
     ]
 
     # Filter players with complete data for similarity analysis
@@ -620,8 +624,9 @@ with tab3:
 
             # Customize chart with transparent background and white text/lines
             metrics_labels = ['Rim Freq', 'Mid Freq', '3PT Freq', '2PT Freq',
+                              'Rim Vol', 'Mid Vol', '3PT Vol',
                               'Overall Assist%', 'Mid Assist%', '3PT Assist%', '2PT Assist%', 'NonDunk Assist%',
-                              '3PT FG%', 'Rim FG%']
+                              '3PT FG%', 'Rim FG%', 'Height']
 
             ax.set_xticks(angles[:-1])
             ax.set_xticklabels(metrics_labels, size=9,
