@@ -1144,12 +1144,18 @@ with tab3:
                                     img_base64 = get_base64_image(player_img)
                                     st.markdown(
                                         f"""
-                                        <div style="background-color: {color}; padding: 8px; border-radius: 5px; margin-bottom: 5px; border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 10px;">
-                                            <img src="data:image/png;base64,{img_base64}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
-                                            <div style="flex: 1;">
-                                                <strong>{row['Player']}</strong> ({role})<br>
-                                                <span style="color: #E8E8E8; font-size: 0.9em;">{similarity_score:.1f}% similar</span>
-                                            </div>
+                                        <div style="background-color: {color}; padding: 8px; border-radius: 5px; margin-bottom: 5px; border: 1px solid rgba(255,255,255,0.1);">
+                                            <table style="width: 100%; border-collapse: collapse;">
+                                                <tr>
+                                                    <td style="width: 50px; vertical-align: middle; padding-right: 10px;">
+                                                        <img src="data:image/png;base64,{img_base64}" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover; display: block;">
+                                                    </td>
+                                                    <td style="vertical-align: middle;">
+                                                        <strong>{row['Player']}</strong> ({role})<br>
+                                                        <span style="color: #E8E8E8; font-size: 0.9em;">{similarity_score:.1f}% similar</span>
+                                                    </td>
+                                                </tr>
+                                            </table>
                                         </div>
                                         """,
                                         unsafe_allow_html=True
