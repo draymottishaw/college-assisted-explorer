@@ -8,6 +8,51 @@ import pandas as pd
 import streamlit as st
 from pathlib import Path
 from utils import compute_metrics, grouped_player_role_year_overall_chart
+import os
+import base64
+
+# Helper function to convert image to base64
+
+
+def get_base64_image(image_path):
+    """Convert image to base64 string for HTML embedding"""
+    with open(image_path, "rb") as img_file:
+        return base64.b64encode(img_file.read()).decode()
+
+# Helper function to get player image
+
+
+def get_player_image(player_name):
+    """Look up player image by name in temp_data/player_images/"""
+    if not player_name:
+        return None
+
+    # Normalize the player name for matching
+    normalized_name = player_name.replace(
+        ".", "").replace("'", "").replace("-", " ")
+
+    # Look in player_images folder
+    image_folder = Path('temp_data/player_images')
+    if not image_folder.exists():
+        return None
+
+    # Try to find matching image
+    # Format is: {ID}_{First_Name}_{Last_Name}.png
+    pattern = f"*_{normalized_name.replace(' ', '_')}.png"
+    matches = list(image_folder.glob(pattern))
+
+    if matches:
+        return str(matches[0])
+
+    # Try with hyphens instead of underscores
+    pattern = f"*_{normalized_name.replace(' ', '-')}.png"
+    matches = list(image_folder.glob(pattern))
+
+    if matches:
+        return str(matches[0])
+
+    return None
+
 
 # ============================================================
 # PAGE CONFIG
@@ -1091,15 +1136,35 @@ with tab3:
                             # Distribute across 4 columns
                             target_col = columns[idx % 4]
                             with target_col:
-                                st.markdown(
-                                    f"""
-                                    <div style="background-color: {color}; padding: 8px; border-radius: 5px; margin-bottom: 5px; border: 1px solid rgba(255,255,255,0.1);">
-                                        <strong>{row['Player']}</strong> ({role})<br>
-                                        <span style="color: #E8E8E8; font-size: 0.9em;">{similarity_score:.1f}% similar</span>
-                                    </div>
-                                    """,
-                                    unsafe_allow_html=True
-                                )
+                                # Get player image
+                                player_img = get_player_image(row['Player'])
+
+                                if player_img and os.path.exists(player_img):
+                                    # Display with image embedded in colored card
+                                    img_base64 = get_base64_image(player_img)
+                                    st.markdown(
+                                        f"""
+                                        <div style="background-color: {color}; padding: 8px; border-radius: 5px; margin-bottom: 5px; border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 10px;">
+                                            <img src="data:image/png;base64,{img_base64}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+                                            <div style="flex: 1;">
+                                                <strong>{row['Player']}</strong> ({role})<br>
+                                                <span style="color: #E8E8E8; font-size: 0.9em;">{similarity_score:.1f}% similar</span>
+                                            </div>
+                                        </div>
+                                        """,
+                                        unsafe_allow_html=True
+                                    )
+                                else:
+                                    # Display without image (original style)
+                                    st.markdown(
+                                        f"""
+                                        <div style="background-color: {color}; padding: 8px; border-radius: 5px; margin-bottom: 5px; border: 1px solid rgba(255,255,255,0.1);">
+                                            <strong>{row['Player']}</strong> ({role})<br>
+                                            <span style="color: #E8E8E8; font-size: 0.9em;">{similarity_score:.1f}% similar</span>
+                                        </div>
+                                        """,
+                                        unsafe_allow_html=True
+                                    )
 
                         st.markdown("---")
 
