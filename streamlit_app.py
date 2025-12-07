@@ -850,7 +850,7 @@ with tab1:
         f"""
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
             <div style="font-size:14px;">
-                <strong>Page:</strong> {len(filt):,} players | <strong>Total:</strong> {len(base_df):,}
+                <strong>Showing:</strong> {len(filt):,} of {len(base_df):,} players
             </div>
             <div style="display:flex;gap:8px;align-items:center;font-size:12px;">
                 <span style="font-weight:500;color:#aaa;">Legend:</span>
@@ -1246,10 +1246,12 @@ with tab3:
             values2_normalized += values2_normalized[:1]
 
             # Create the radar chart
-            angles = [n / len(metrics) * 2 * np.pi for n in range(len(metrics))]
+            angles = [n / len(metrics) * 2 *
+                      np.pi for n in range(len(metrics))]
             angles += angles[:1]
 
-            fig, ax = plt.subplots(figsize=(8, 8), subplot_kw=dict(projection='polar'))
+            fig, ax = plt.subplots(
+                figsize=(8, 8), subplot_kw=dict(projection='polar'))
 
             # Plot both players
             ax.plot(angles, values1_normalized, 'o-', linewidth=2,
@@ -1261,7 +1263,8 @@ with tab3:
             ax.fill(angles, values2_normalized, alpha=0.25, color='#ff7f0e')
 
             ax.set_xticks(angles[:-1])
-            ax.set_xticklabels(labels, size=9, color='white', fontweight='bold')
+            ax.set_xticklabels(
+                labels, size=9, color='white', fontweight='bold')
             ax.set_ylim(0, 1)
             ax.set_yticks([0.25, 0.5, 0.75, 1.0])
             ax.set_yticklabels(['25%', '50%', '75%', '100%'],
