@@ -104,7 +104,7 @@ st.markdown(
     }
     [data-testid="stSidebarNav"] { display: none; }
     [data-testid="stSidebarNav"] + div { padding-top: 0 !important; }
-    
+
     /* Compact sidebar spacing */
     section[data-testid="stSidebar"] .stRadio {
         margin-top: -0.5rem !important;
@@ -123,7 +123,7 @@ st.markdown(
         margin-bottom: 0.3rem !important;
         font-size: 1rem !important;
     }
-    
+
     /* Compact main content */
     .main .block-container {
         padding-top: 2rem !important;
@@ -140,7 +140,7 @@ st.markdown(
     .stTabs [data-baseweb="tab-list"] {
         gap: 0.5rem !important;
     }
-    
+
     /* --- tighten and center min/max inputs --- */
 section[data-testid="stSidebar"] div[data-testid="stNumberInput"] {
     display: flex !important;
@@ -422,7 +422,7 @@ with tab1:
     st.markdown(
         f"""
         ---
-        *Data source: BartTorvik.com* | *Page by Dray Mottishaw (@draymottishaw on Twitter/X)*  
+        *Data source: BartTorvik.com* | *Page by Dray Mottishaw (@draymottishaw on Twitter/X)*
         📊 **Dataset**: Complete career totals for {player_count_text} (2010-2026)
         """)
 
@@ -891,17 +891,17 @@ with tab1:
         with col1:
             st.markdown(
                 """
-                **📈 Volume**  
-                **Total_Att** — Total career shot attempts  
-                **RimAtt** — Rim attempts  
-                **Mid_Att** — Midrange attempts  
+                **📈 Volume**
+                **Total_Att** — Total career shot attempts
+                **RimAtt** — Rim attempts
+                **Mid_Att** — Midrange attempts
                 **Three_Att** — Three-point attempts
-                
-                **🎯 Field Goal %**  
-                **NonDunk_Rim%** — FG% at rim excluding dunks  
-                **Total_Rim%** — FG% at rim including dunks  
-                **Mid_FG%** — Midrange FG%  
-                **TwoPt_FG%** — Combined 2P FG%  
+
+                **🎯 Field Goal %**
+                **NonDunk_Rim%** — FG% at rim excluding dunks
+                **Total_Rim%** — FG% at rim including dunks
+                **Mid_FG%** — Midrange FG%
+                **TwoPt_FG%** — Combined 2P FG%
                 **Three_FG%** — 3P FG%
                 """
             )
@@ -909,10 +909,10 @@ with tab1:
         with col2:
             st.markdown(
                 """
-                **📊 Shot Frequency**  
-                **Rim_Freq** — % of shots at rim  
-                **Mid_Freq** — % of shots midrange  
-                **Three_Freq** — % of shots from 3PT  
+                **📊 Shot Frequency**
+                **Rim_Freq** — % of shots at rim
+                **Mid_Freq** — % of shots midrange
+                **Three_Freq** — % of shots from 3PT
                 **TwoPt_Freq** — % of shots inside arc
                 """
             )
@@ -920,16 +920,16 @@ with tab1:
         with col3:
             st.markdown(
                 """
-                **🤝 Assisted %**  
-                **NonDunk_Assisted%** — Non-dunk rim assists  
-                **Total_Assisted_Rim%** — Total rim assists  
-                **Mid_Assisted%** — Midrange assists  
-                **TwoPt_Assisted%** — 2P assists  
-                **Three_Assisted%** — 3P assists  
-                **Total_Assisted%** — Overall assists  
-                
-                **🏀 Dunk Metrics**  
-                **Dunk_Freq** — % of shots that are dunks  
+                **🤝 Assisted %**
+                **NonDunk_Assisted%** — Non-dunk rim assists
+                **Total_Assisted_Rim%** — Total rim assists
+                **Mid_Assisted%** — Midrange assists
+                **TwoPt_Assisted%** — 2P assists
+                **Three_Assisted%** — 3P assists
+                **Total_Assisted%** — Overall assists
+
+                **🏀 Dunk Metrics**
+                **Dunk_Freq** — % of shots that are dunks
                 **Dunk_FG%** — Dunk field goal %
                 """
             )
@@ -1212,113 +1212,83 @@ with tab3:
             player2_data = df_similarity[df_similarity['Player']
                                          == player2].iloc[0]
 
-            # Define three separate metric groups (only using metrics available in similarity df)
-            metric_groups = {
-                'Shooting Efficiency': {
-                    'metrics': ['Total_Rim%', 'Three_FG%'],
-                    'labels': ['Rim FG%', '3PT FG%']
-                },
-                'Shot Distribution': {
-                    'metrics': ['Rim_Freq', 'Mid_Freq', 'Three_Freq'],
-                    'labels': ['Rim Freq', 'Mid Freq', '3PT Freq']
-                },
-                'Assisted Rates': {
-                    'metrics': ['Total_Assisted%', 'Mid_Assisted%', 'Three_Assisted%', 'NonDunk_Assisted%'],
-                    'labels': ['Overall Ast%', 'Mid Ast%', '3PT Ast%', 'Non-Dunk Ast%']
-                }
-            }
+            # Single comprehensive radar chart (no volume metrics)
+            metrics = ['Total_Rim%', 'Three_FG%', 'Rim_Freq', 'Mid_Freq', 'Three_Freq',
+                       'Total_Assisted%', 'NonDunk_Assisted%', 'Mid_Assisted%', 'Three_Assisted%', 'Height']
+            labels = ['Rim FG%', '3PT FG%', 'Rim Freq', 'Mid Freq', '3PT Freq',
+                      'Overall Ast%', 'Non-Dunk Ast%', 'Mid Ast%', '3PT Ast%', 'Height']
 
-            # Create three radar charts in a row
-            chart_cols = st.columns(3)
+            # Get raw values
+            values1_raw = [player1_data[metric] for metric in metrics]
+            values2_raw = [player2_data[metric] for metric in metrics]
 
-            for idx, (group_name, group_info) in enumerate(metric_groups.items()):
-                with chart_cols[idx]:
-                    st.markdown(f"**{group_name}**")
+            # Normalize values to 0-1 scale
+            values1_normalized = []
+            values2_normalized = []
 
-                    metrics = group_info['metrics']
-                    labels = group_info['labels']
+            for i, metric in enumerate(metrics):
+                metric_data = df_combined[metric].dropna()
+                min_val = metric_data.min()
+                max_val = metric_data.max()
 
-                    # Get raw values
-                    values1_raw = [player1_data[metric] for metric in metrics]
-                    values2_raw = [player2_data[metric] for metric in metrics]
+                if max_val - min_val > 0:
+                    v1_norm = (values1_raw[i] - min_val) / (max_val - min_val)
+                    v2_norm = (values2_raw[i] - min_val) / (max_val - min_val)
+                else:
+                    v1_norm = 0.5
+                    v2_norm = 0.5
 
-                    # Normalize values to 0-1 scale
-                    values1_normalized = []
-                    values2_normalized = []
+                values1_normalized.append(v1_norm)
+                values2_normalized.append(v2_norm)
 
-                    for i, metric in enumerate(metrics):
-                        metric_data = df_combined[metric].dropna()
-                        min_val = metric_data.min()
-                        max_val = metric_data.max()
+            # Close the radar chart by repeating first value
+            values1_normalized += values1_normalized[:1]
+            values2_normalized += values2_normalized[:1]
 
-                        if max_val - min_val > 0:
-                            v1_norm = (
-                                values1_raw[i] - min_val) / (max_val - min_val)
-                            v2_norm = (
-                                values2_raw[i] - min_val) / (max_val - min_val)
-                        else:
-                            v1_norm = 0.5
-                            v2_norm = 0.5
+            # Create the radar chart
+            angles = [n / len(metrics) * 2 * np.pi for n in range(len(metrics))]
+            angles += angles[:1]
 
-                        values1_normalized.append(v1_norm)
-                        values2_normalized.append(v2_norm)
+            fig, ax = plt.subplots(figsize=(8, 8), subplot_kw=dict(projection='polar'))
 
-                    # Close the loop
-                    angles = [n / float(len(metrics)) * 2 *
-                              np.pi for n in range(len(metrics))]
-                    angles += angles[:1]
-                    values1_normalized += values1_normalized[:1]
-                    values2_normalized += values2_normalized[:1]
+            # Plot both players
+            ax.plot(angles, values1_normalized, 'o-', linewidth=2,
+                    label=player1, color='#1f77b4')
+            ax.fill(angles, values1_normalized, alpha=0.25, color='#1f77b4')
 
-                    # Create figure
-                    fig, ax = plt.subplots(
-                        figsize=(5, 5), subplot_kw=dict(projection='polar'))
+            ax.plot(angles, values2_normalized, 'o-', linewidth=2,
+                    label=player2, color='#ff7f0e')
+            ax.fill(angles, values2_normalized, alpha=0.25, color='#ff7f0e')
 
-                    # Plot both players
-                    ax.plot(angles, values1_normalized, 'o-', linewidth=2,
-                            label=player1, color='#FF6B6B', alpha=0.8)
-                    ax.fill(angles, values1_normalized,
-                            alpha=0.25, color='#FF6B6B')
+            ax.set_xticks(angles[:-1])
+            ax.set_xticklabels(labels, size=9, color='white', fontweight='bold')
+            ax.set_ylim(0, 1)
+            ax.set_yticks([0.25, 0.5, 0.75, 1.0])
+            ax.set_yticklabels(['25%', '50%', '75%', '100%'],
+                               size=8, color='white', fontweight='bold')
 
-                    ax.plot(angles, values2_normalized, 'o-', linewidth=2,
-                            label=player2, color='#4ECDC4', alpha=0.8)
-                    ax.fill(angles, values2_normalized,
-                            alpha=0.25, color='#4ECDC4')
+            ax.grid(True, color='white', alpha=0.7, linewidth=1)
+            ax.set_facecolor('none')
+            fig.patch.set_facecolor('none')
+            fig.patch.set_alpha(0)
 
-                    # Customize
-                    ax.set_xticks(angles[:-1])
-                    ax.set_xticklabels(
-                        labels, size=8, color='white', fontweight='bold')
-                    ax.set_ylim(0, 1)
-                    ax.set_yticks([0.25, 0.5, 0.75, 1.0])
-                    ax.set_yticklabels(['25%', '50%', '75%', '100%'],
-                                       size=7, color='white', fontweight='bold')
+            legend = ax.legend(loc='upper right', bbox_to_anchor=(1.3, 1.15),
+                               frameon=False, fontsize=10)
+            for text in legend.get_texts():
+                text.set_color('white')
+                text.set_fontweight('bold')
 
-                    ax.grid(True, color='white', alpha=0.7, linewidth=1)
-                    ax.set_facecolor('none')
-                    fig.patch.set_facecolor('none')
-                    fig.patch.set_alpha(0)
-
-                    # Legend only on first chart
-                    if idx == 0:
-                        legend = ax.legend(loc='upper right',
-                                           bbox_to_anchor=(1.3, 1.15), frameon=False, fontsize=8)
-                        for text in legend.get_texts():
-                            text.set_color('white')
-                            text.set_fontweight('bold')
-
-                    st.pyplot(fig, use_container_width=True)
-                    plt.close(fig)
+            st.pyplot(fig, use_container_width=True)
+            plt.close(fig)
 
         with col_metrics:
             st.markdown("#### 📈 Side-by-Side Metrics")
 
-            # Combine all metrics from radar charts plus volume and height
+            # Combine all metrics from radar chart
             all_metrics = [
                 'Total_Rim%', 'Three_FG%',
                 'Rim_Freq', 'Mid_Freq', 'Three_Freq',
                 'Total_Assisted%', 'NonDunk_Assisted%', 'Mid_Assisted%', 'Three_Assisted%',
-                'RimAtt', 'Mid_Att', 'Three_Att',
                 'Height'
             ]
 
