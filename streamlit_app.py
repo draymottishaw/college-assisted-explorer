@@ -1204,7 +1204,7 @@ with tab3:
         col_chart, col_metrics = st.columns([1, 1])
 
         with col_chart:
-            st.markdown("#### 📊 Radar Chart")
+            st.markdown("#### 📊 Player Comparison Radar Charts")
 
             # Get data for both players
             player1_data = df_similarity[df_similarity['Player']
@@ -1212,95 +1212,119 @@ with tab3:
             player2_data = df_similarity[df_similarity['Player']
                                          == player2].iloc[0]
 
-            # Create unique metrics list for radar chart (no duplicates)
-            unique_metrics = [
-                'Rim_Freq', 'Mid_Freq', 'Three_Freq', 'TwoPt_Freq',
-                'RimAtt', 'Mid_Att', 'Three_Att',
-                'Total_Assisted%', 'Mid_Assisted%', 'Three_Assisted%', 'TwoPt_Assisted%', 'NonDunk_Assisted%',
-                'Three_FG%', 'Total_Rim%',
-                'Height'
-            ]
+            # Define three separate metric groups
+            metric_groups = {
+                'Shooting Efficiency': {
+                    'metrics': ['Total_Rim%', 'NonDunk_Rim%', 'Mid_FG%', 'Three_FG%'],
+                    'labels': ['Rim FG%', 'Non-Dunk Rim%', 'Mid FG%', '3PT FG%']
+                },
+                'Shot Distribution': {
+                    'metrics': ['Rim_Freq', 'Mid_Freq', 'Three_Freq'],
+                    'labels': ['Rim Freq', 'Mid Freq', '3PT Freq']
+                },
+                'Assisted Rates': {
+                    'metrics': ['Total_Assisted%', 'NonDunk_Assisted%', 'Mid_Assisted%', 'Three_Assisted%'],
+                    'labels': ['Overall Ast%', 'Non-Dunk Ast%', 'Mid Ast%', '3PT Ast%']
+                }
+            }
 
-            # Get raw values
-            values1_raw = [player1_data[metric] for metric in unique_metrics]
-            values2_raw = [player2_data[metric] for metric in unique_metrics]
+            # Create three radar charts in a row
+            chart_cols = st.columns(3)
 
-            # Normalize values to 0-1 scale for radar chart display
-            # Use min-max normalization for each metric across all players
-            values1_normalized = []
-            values2_normalized = []
+            for idx, (group_name, group_info) in enumerate(metric_groups.items()):
+                with chart_cols[idx]:
+                    st.markdown(f"**{group_name}**")
 
-            for i, metric in enumerate(unique_metrics):
-                metric_data = df_combined[metric].dropna()
-                min_val = metric_data.min()
-                max_val = metric_data.max()
+                    metrics = group_info['metrics']
+                    labels = group_info['labels']
 
-                # Avoid division by zero
-                if max_val - min_val > 0:
-                    v1_norm = (values1_raw[i] - min_val) / (max_val - min_val)
-                    v2_norm = (values2_raw[i] - min_val) / (max_val - min_val)
-                else:
-                    v1_norm = 0.5
-                    v2_norm = 0.5
+                    # Get raw values
+                    values1_raw = [player1_data[metric] for metric in metrics]
+                    values2_raw = [player2_data[metric] for metric in metrics]
 
-                values1_normalized.append(v1_norm)
-                values2_normalized.append(v2_norm)
+                    # Normalize values to 0-1 scale
+                    values1_normalized = []
+                    values2_normalized = []
 
-            angles = [n / float(len(unique_metrics)) * 2 *
-                      np.pi for n in range(len(unique_metrics))]
-            angles += angles[:1]
-            values1_normalized += values1_normalized[:1]
-            values2_normalized += values2_normalized[:1]
+                    for i, metric in enumerate(metrics):
+                        metric_data = df_combined[metric].dropna()
+                        min_val = metric_data.min()
+                        max_val = metric_data.max()
 
-            fig, ax = plt.subplots(
-                figsize=(7, 7), subplot_kw=dict(projection='polar'))
+                        if max_val - min_val > 0:
+                            v1_norm = (
+                                values1_raw[i] - min_val) / (max_val - min_val)
+                            v2_norm = (
+                                values2_raw[i] - min_val) / (max_val - min_val)
+                        else:
+                            v1_norm = 0.5
+                            v2_norm = 0.5
 
-            # Plot both players with normalized values
-            ax.plot(angles, values1_normalized, 'o-', linewidth=2,
-                    label=player1, color='#FF6B6B', alpha=0.8)
-            ax.fill(angles, values1_normalized, alpha=0.25, color='#FF6B6B')
+                        values1_normalized.append(v1_norm)
+                        values2_normalized.append(v2_norm)
 
-            ax.plot(angles, values2_normalized, 'o-', linewidth=2,
-                    label=player2, color='#4ECDC4', alpha=0.8)
-            ax.fill(angles, values2_normalized, alpha=0.25, color='#4ECDC4')
+                    # Close the loop
+                    angles = [n / float(len(metrics)) * 2 *
+                              np.pi for n in range(len(metrics))]
+                    angles += angles[:1]
+                    values1_normalized += values1_normalized[:1]
+                    values2_normalized += values2_normalized[:1]
 
-            # Customize chart with transparent background and white text/lines
-            metrics_labels = ['Rim Freq', 'Mid Freq', '3PT Freq', '2PT Freq',
-                              'Rim Vol', 'Mid Vol', '3PT Vol',
-                              'Overall Assist%', 'Mid Assist%', '3PT Assist%', '2PT Assist%', 'NonDunk Assist%',
-                              '3PT FG%', 'Rim FG%', 'Height']
+                    # Create figure
+                    fig, ax = plt.subplots(
+                        figsize=(5, 5), subplot_kw=dict(projection='polar'))
 
-            ax.set_xticks(angles[:-1])
-            ax.set_xticklabels(metrics_labels, size=9,
-                               color='white', fontweight='bold')
-            ax.set_ylim(0, 1)
-            ax.set_yticks([0.2, 0.4, 0.6, 0.8, 1.0])
-            ax.set_yticklabels(['20%', '40%', '60%', '80%', '100%'],
-                               size=8, color='white', fontweight='bold')
+                    # Plot both players
+                    ax.plot(angles, values1_normalized, 'o-', linewidth=2,
+                            label=player1, color='#FF6B6B', alpha=0.8)
+                    ax.fill(angles, values1_normalized,
+                            alpha=0.25, color='#FF6B6B')
 
-            # White grid lines
-            ax.grid(True, color='white', alpha=0.7, linewidth=1)
-            ax.set_facecolor('none')  # Transparent background
+                    ax.plot(angles, values2_normalized, 'o-', linewidth=2,
+                            label=player2, color='#4ECDC4', alpha=0.8)
+                    ax.fill(angles, values2_normalized,
+                            alpha=0.25, color='#4ECDC4')
 
-            # Transparent figure background
-            fig.patch.set_facecolor('none')
-            fig.patch.set_alpha(0)
+                    # Customize
+                    ax.set_xticks(angles[:-1])
+                    ax.set_xticklabels(
+                        labels, size=8, color='white', fontweight='bold')
+                    ax.set_ylim(0, 1)
+                    ax.set_yticks([0.25, 0.5, 0.75, 1.0])
+                    ax.set_yticklabels(['25%', '50%', '75%', '100%'],
+                                       size=7, color='white', fontweight='bold')
 
-            # Legend styling
-            legend = ax.legend(loc='upper right',
-                               bbox_to_anchor=(1.2, 1.1), frameon=False)
-            for text in legend.get_texts():
-                text.set_color('white')
-                text.set_fontweight('bold')
+                    ax.grid(True, color='white', alpha=0.7, linewidth=1)
+                    ax.set_facecolor('none')
+                    fig.patch.set_facecolor('none')
+                    fig.patch.set_alpha(0)
 
-            st.pyplot(fig, use_container_width=True)
+                    # Legend only on first chart
+                    if idx == 0:
+                        legend = ax.legend(loc='upper right',
+                                           bbox_to_anchor=(1.3, 1.15), frameon=False, fontsize=8)
+                        for text in legend.get_texts():
+                            text.set_color('white')
+                            text.set_fontweight('bold')
+
+                    st.pyplot(fig, use_container_width=True)
+                    plt.close(fig)
 
         with col_metrics:
             st.markdown("#### 📈 Side-by-Side Metrics")
 
+            # Combine all metrics from radar charts plus volume and height
+            all_metrics = [
+                'Total_Rim%', 'NonDunk_Rim%', 'Mid_FG%', 'Three_FG%',
+                'Rim_Freq', 'Mid_Freq', 'Three_Freq',
+                'Total_Assisted%', 'NonDunk_Assisted%', 'Mid_Assisted%', 'Three_Assisted%',
+                'RimAtt', 'Mid_Att', 'Three_Att',
+                'Height'
+            ]
+
             # Create a comparison table with proper formatting
             comparison_data = []
-            for metric in unique_metrics:
+            for metric in all_metrics:
                 val1 = player1_data[metric]
                 val2 = player2_data[metric]
 
