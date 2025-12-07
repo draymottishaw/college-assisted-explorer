@@ -1212,19 +1212,19 @@ with tab3:
             player2_data = df_similarity[df_similarity['Player']
                                          == player2].iloc[0]
 
-            # Define three separate metric groups
+            # Define three separate metric groups (only using metrics available in similarity df)
             metric_groups = {
                 'Shooting Efficiency': {
-                    'metrics': ['Total_Rim%', 'NonDunk_Rim%', 'Mid_FG%', 'Three_FG%'],
-                    'labels': ['Rim FG%', 'Non-Dunk Rim%', 'Mid FG%', '3PT FG%']
+                    'metrics': ['Total_Rim%', 'Three_FG%'],
+                    'labels': ['Rim FG%', '3PT FG%']
                 },
                 'Shot Distribution': {
                     'metrics': ['Rim_Freq', 'Mid_Freq', 'Three_Freq'],
                     'labels': ['Rim Freq', 'Mid Freq', '3PT Freq']
                 },
                 'Assisted Rates': {
-                    'metrics': ['Total_Assisted%', 'NonDunk_Assisted%', 'Mid_Assisted%', 'Three_Assisted%'],
-                    'labels': ['Overall Ast%', 'Non-Dunk Ast%', 'Mid Ast%', '3PT Ast%']
+                    'metrics': ['Total_Assisted%', 'Mid_Assisted%', 'Three_Assisted%', 'NonDunk_Assisted%'],
+                    'labels': ['Overall Ast%', 'Mid Ast%', '3PT Ast%', 'Non-Dunk Ast%']
                 }
             }
 
@@ -1315,7 +1315,7 @@ with tab3:
 
             # Combine all metrics from radar charts plus volume and height
             all_metrics = [
-                'Total_Rim%', 'NonDunk_Rim%', 'Mid_FG%', 'Three_FG%',
+                'Total_Rim%', 'Three_FG%',
                 'Rim_Freq', 'Mid_Freq', 'Three_Freq',
                 'Total_Assisted%', 'NonDunk_Assisted%', 'Mid_Assisted%', 'Three_Assisted%',
                 'RimAtt', 'Mid_Att', 'Three_Att',
