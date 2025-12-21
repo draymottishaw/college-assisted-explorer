@@ -596,6 +596,14 @@ with tab1:
         )
         min_three = int(min_three_input) if min_three_input.isdigit() else 0
 
+        min_twopt_input = st.text_input(
+            "Minimum 2PT Attempts",
+            value="0",
+            help="Filter by minimum two-point attempts (rim + mid)",
+            key="min_twopt_filter"
+        )
+        min_twopt = int(min_twopt_input) if min_twopt_input.isdigit() else 0
+
     # FG% Filters
     with st.sidebar.expander("🎯 Field Goal % Filters"):
         for col in fg_pct_cols:
@@ -741,6 +749,9 @@ with tab1:
 
     if min_three > 0 and "Three_Att" in filt.columns:
         filt = filt[filt["Three_Att"] >= min_three]
+
+    if min_twopt > 0 and "TwoPt_Att" in filt.columns:
+        filt = filt[filt["TwoPt_Att"] >= min_twopt]
 
     for col, (low, high) in range_filters.items():
         if col not in filt.columns:
