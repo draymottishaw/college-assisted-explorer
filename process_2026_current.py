@@ -62,9 +62,12 @@ def process_2026_current_players():
 
     print(f"Filtered 2026 players (in 2026_stats.csv): {len(df_2026)}")
 
-    # Merge with stats to get Role and YR - use both player name AND team to avoid duplicates
-    df_2026 = df_2026.merge(stats_2026[['player_lower', 'Team', 'Role', 'YR']],
+    # Merge with stats to get Position and YR - use both player name AND team to avoid duplicates
+    df_2026 = df_2026.merge(stats_2026[['player_lower', 'Team', 'Position', 'YR']],
                             on=['player_lower', 'Team'], how='left')
+
+    # Rename Position to Role for consistency with other data
+    df_2026 = df_2026.rename(columns={'Position': 'Role'})
 
     # Convert to numeric
     stat_cols = ['RimMade', 'RimMiss', 'RimAst', 'MidMade', 'MidMiss', 'MidAst',
