@@ -10,8 +10,9 @@ def process_2026_current_players():
     # Load 2026 stats for role and year info
     stats_2026 = pd.read_csv("temp_data/2026_stats.csv")
     stats_2026['player_lower'] = stats_2026['Player'].str.lower().str.strip()
+    stats_2026['Team'] = stats_2026['Team'].str.strip()
 
-    # Create set of players to include (only those in 2026_stats.csv)
+    # Create set of player+team combinations to include (only those in 2026_stats.csv)
     players_to_include = set(stats_2026['player_lower'])
 
     print(f"2026 Stats players to include: {len(stats_2026)}")
@@ -57,12 +58,13 @@ def process_2026_current_players():
 
     df_2026 = pd.DataFrame(all_player_data)
     df_2026['player_lower'] = df_2026['Player'].str.lower().str.strip()
+    df_2026['Team'] = df_2026['Team'].str.strip()
 
     print(f"Filtered 2026 players (in 2026_stats.csv): {len(df_2026)}")
 
-    # Merge with stats to get Role and YR
-    df_2026 = df_2026.merge(stats_2026[['player_lower', 'Role', 'YR']],
-                            on='player_lower', how='left')
+    # Merge with stats to get Role and YR - use both player name AND team to avoid duplicates
+    df_2026 = df_2026.merge(stats_2026[['player_lower', 'Team', 'Role', 'YR']],
+                            on=['player_lower', 'Team'], how='left')
 
     # Convert to numeric
     stat_cols = ['RimMade', 'RimMiss', 'RimAst', 'MidMade', 'MidMiss', 'MidAst',
