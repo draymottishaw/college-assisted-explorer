@@ -814,7 +814,7 @@ with tab1:
     # Only include columns that actually exist in the DataFrame
     available_pct_cols = [col for col in stat_cols if col in filt.columns]
     # Put volume columns first among stats for visibility
-    volume_cols = ["Total_Att", "RimAtt", "Mid_Att", "Three_Att"]
+    volume_cols = ["Total_Att", "TwoPt_Att", "RimAtt", "Mid_Att", "Three_Att"]
     other_cols = [col for col in available_pct_cols if col not in volume_cols]
     display_cols = ["Player", "Year_final",
                     "Role_final"] + volume_cols + other_cols
@@ -822,7 +822,8 @@ with tab1:
     def highlight_row(row):
         role = row["Role_final"]
         styles = []
-        volume_cols_set = {"Total_Att", "RimAtt", "Mid_Att", "Three_Att"}
+        volume_cols_set = {"Total_Att", "TwoPt_Att",
+                           "RimAtt", "Mid_Att", "Three_Att"}
         for col in display_cols:
             # Don't color volume columns or player info columns
             if col in available_pct_cols and col not in volume_cols_set:
@@ -879,7 +880,8 @@ with tab1:
     # Performance optimization: only apply styling to limited rows
     if len(filt) > 0:
         # Format only percentage columns, not volume columns
-        volume_cols_set = {"Total_Att", "RimAtt", "Mid_Att", "Three_Att"}
+        volume_cols_set = {"Total_Att", "TwoPt_Att",
+                           "RimAtt", "Mid_Att", "Three_Att"}
         pct_cols_to_format = {
             c: "{:.1%}" for c in available_pct_cols if c not in volume_cols_set}
 
@@ -904,6 +906,7 @@ with tab1:
                 """
                 **📈 Volume**
                 **Total_Att** — Total career shot attempts
+                **TwoPt_Att** — Two-point attempts (rim + mid)
                 **RimAtt** — Rim attempts
                 **Mid_Att** — Midrange attempts
                 **Three_Att** — Three-point attempts
