@@ -233,6 +233,10 @@ def load_data():
             df_2026["player_lower"] = df_2026["Player"].astype(
                 str).str.lower().str.strip()
 
+        # Add Role column if it doesn't exist (map from Position)
+        if "Role" not in df_2026.columns and "Position" in df_2026.columns:
+            df_2026["Role"] = df_2026["Position"]
+
     # Use complete NBA players data first (includes undrafted), then fallback to drafted-only data
     df_nba_slim = df_nba_players[["player_lower",
                                   "Role", "YR"]].drop_duplicates("player_lower")
