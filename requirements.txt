@@ -1,6 +1,7 @@
 pandas
-streamlit
+streamlit>=1.31.0
 matplotlib
 scikit-learn
 numpy
-# Chart fix v2.1 - Force redeploy
+altair<5
+# Chart fix v2.2 - Fixed altair/streamlit compatibility
